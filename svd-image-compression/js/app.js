@@ -65,7 +65,8 @@ function init() {
         kValue: document.getElementById('k-value'),
         kMax: document.getElementById('k-max'),
         compressionRatio: document.getElementById('compression-ratio'),
-        dataKept: document.getElementById('data-kept'),
+        psnrValue: document.getElementById('psnr-value'),
+        energyValue: document.getElementById('energy-value'),
         svdTime: document.getElementById('svd-time'),
         explanationText: document.getElementById('explanation-text'),
         btnShowMath: document.getElementById('btn-show-math'),
@@ -578,7 +579,6 @@ function updateStats(k, size) {
     const originalData = size * size;
     const compressedData = k * (size + size + 1);
     const ratio = Math.max(0, (1 - compressedData / originalData) * 100);
-    const dataKept = Math.min(100, (compressedData / originalData) * 100);
 
     // Energy preserved
     const S = state.colorMode === 'grayscale' ? state.svdData.S : state.svdDataR.S;
@@ -589,18 +589,79 @@ function updateStats(k, size) {
     }
     const energyPreserved = (keptEnergy / totalEnergy) * 100;
 
+    // Calculate PSNR
+    const psnr = calculatePSNR(k, size);
+
+    // Update UI
     elements.compressionRatio.textContent = ratio.toFixed(0) + '%';
-    elements.dataKept.textContent = dataKept.toFixed(0) + '%';
+    elements.psnrValue.textContent = psnr === Infinity ? '∞ dB' : psnr.toFixed(1) + ' dB';
+    elements.energyValue.textContent = energyPreserved.toFixed(1) + '%';
     elements.statsK.textContent = `k = ${k}`;
+
+    // PSNR quality indicator
+    let psnrQuality = '';
+    if (psnr >= 40) psnrQuality = '(Xuất sắc)';
+    else if (psnr >= 30) psnrQuality = '(Tốt)';
+    else if (psnr >= 20) psnrQuality = '(Chấp nhận)';
+    else psnrQuality = '(Kém)';
 
     elements.explanationText.innerHTML = `
         Với <strong>k = ${k}</strong>, ta chỉ giữ <strong>${k} singular values</strong> lớn nhất.
-        Ma trận gốc <strong>${size}×${size} = ${originalData.toLocaleString()}</strong> số được biểu diễn bằng
-        <strong>${k}×(${size}+${size}+1) = ${compressedData.toLocaleString()}</strong> số
-        → tiết kiệm <strong>${ratio.toFixed(0)}%</strong> dữ liệu!
         <br><br>
-        Năng lượng giữ lại: <strong>${energyPreserved.toFixed(1)}%</strong>
+        📊 <strong>PSNR = ${psnr === Infinity ? '∞' : psnr.toFixed(1)} dB</strong> ${psnrQuality}
+        <br>
+        ⚡ <strong>Energy = ${energyPreserved.toFixed(1)}%</strong> năng lượng giữ lại
+        <br>
+        💾 <strong>Nén ${ratio.toFixed(0)}%</strong> (${originalData.toLocaleString()} → ${compressedData.toLocaleString()} số)
     `;
+}
+
+// Calculate PSNR between original and reconstructed image
+function calculatePSNR(k, size) {
+    let mse = 0;
+    const n = size * size;
+
+    if (state.colorMode === 'grayscale') {
+        const { U, S, V } = state.svdData;
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                let reconstructed = 0;
+                for (let i = 0; i < k && S[i] > 1e-10; i++) {
+                    reconstructed += S[i] * U[row][i] * V[col][i];
+                }
+                const original = state.imageMatrix[row][col];
+                const diff = original - reconstructed;
+                mse += diff * diff;
+            }
+        }
+    } else {
+        // For color, average MSE across R, G, B
+        const channels = [
+            { svd: state.svdDataR, matrix: state.imageMatrixR },
+            { svd: state.svdDataG, matrix: state.imageMatrixG },
+            { svd: state.svdDataB, matrix: state.imageMatrixB }
+        ];
+        for (const { svd, matrix } of channels) {
+            const { U, S, V } = svd;
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    let reconstructed = 0;
+                    for (let i = 0; i < k && S[i] > 1e-10; i++) {
+                        reconstructed += S[i] * U[row][i] * V[col][i];
+                    }
+                    const original = matrix[row][col];
+                    const diff = original - reconstructed;
+                    mse += diff * diff;
+                }
+            }
+        }
+        mse /= 3; // Average across 3 channels
+    }
+
+    mse /= n;
+
+    if (mse === 0) return Infinity;
+    return 10 * Math.log10((255 * 255) / mse);
 }
 
 function updatePresetButtons() {
