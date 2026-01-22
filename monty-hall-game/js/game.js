@@ -413,27 +413,49 @@ function registerPlayer() {
     });
 }
 
-function submitToGoogleForm() {
-    // Tao URL Google Form voi prefilled data
-    // Ban can thay FORM_ID va ENTRY_IDs bang cua ban
-    const formBaseUrl = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
+function submitToGoogleSheet() {
+    // Google Apps Script Web App URL
+    // Thay bang URL cua ban sau khi deploy Apps Script
+    const GOOGLE_SHEET_URL = window.firebaseConfig?.GOOGLE_SHEET_URL || '';
 
-    const switchTotal = gameState.switchWins + gameState.switchLosses;
-    const stayTotal = gameState.stayWins + gameState.stayLosses;
+    const totalGames = gameState.wins + gameState.losses;
+    const winRate = totalGames > 0 ? Math.round((gameState.wins / totalGames) * 100) : 0;
 
-    const params = new URLSearchParams({
-        'entry.NAME_FIELD': gameState.playerName,
-        'entry.TOTAL_FIELD': gameState.wins + gameState.losses,
-        'entry.WINS_FIELD': gameState.wins,
-        'entry.SWITCH_WINS_FIELD': `${gameState.switchWins}/${switchTotal}`,
-        'entry.STAY_WINS_FIELD': `${gameState.stayWins}/${stayTotal}`
+    const data = {
+        name: gameState.playerName,
+        totalGames: totalGames,
+        wins: gameState.wins,
+        losses: gameState.losses,
+        winRate: winRate + '%',
+        switchWins: gameState.switchWins,
+        switchLosses: gameState.switchLosses,
+        stayWins: gameState.stayWins,
+        stayLosses: gameState.stayLosses,
+        sessionId: window.firebaseConfig?.SESSION_ID || 'unknown'
+    };
+
+    // Kiem tra URL da duoc cau hinh chua
+    if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === '') {
+        alert(`Da luu ket qua!\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins} (${data.winRate})\n\nDoi cua: ${data.switchWins}\nGiu cua: ${data.stayWins}\n\n(Cau hinh GOOGLE_SHEET_URL de tu dong luu vao Sheet)`);
+        return;
+    }
+
+    // Gui data len Google Sheet
+    fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Google Apps Script yeu cau no-cors
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        alert(`Da gui ket qua thanh cong!\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins} (${data.winRate})\n\nDoi cua: ${data.switchWins}\nGiu cua: ${data.stayWins}`);
+    })
+    .catch(error => {
+        console.error('Loi gui Google Sheet:', error);
+        alert(`Ket qua cua ban:\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins}\n\n(Loi ket noi - vui long thu lai)`);
     });
-
-    // Mo Google Form trong tab moi
-    // window.open(`${formBaseUrl}?${params.toString()}`, '_blank');
-
-    // Tam thoi hien thong bao
-    alert(`Ket qua cua ban:\n\nTen: ${gameState.playerName}\nTong: ${gameState.wins + gameState.losses} luot\nThang: ${gameState.wins}\n\nDoi cua: ${gameState.switchWins}/${switchTotal}\nGiu cua: ${gameState.stayWins}/${stayTotal}\n\n(Tinh nang gui Google Form dang phat trien)`);
 }
 
 // ===== EVENT LISTENERS =====
@@ -476,7 +498,7 @@ function initEventListeners() {
 
     // Final screen
     elements.btnPlayMore.addEventListener('click', playMoreRounds);
-    elements.btnSubmit.addEventListener('click', submitToGoogleForm);
+    elements.btnSubmit.addEventListener('click', submitToGoogleSheet);
 }
 
 // ===== INITIALIZATION =====
