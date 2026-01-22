@@ -1,7 +1,7 @@
 /**
  * MONTY HALL GAME
  * ================
- * Logic chinh cua game
+ * Logic chính của game
  */
 
 // ===== GAME STATE =====
@@ -14,12 +14,12 @@ const gameState = {
     losses: 0,
 
     // Current game data
-    carPosition: 0,      // Cua co xe (1, 2, 3)
-    firstChoice: 0,      // Cua chon dau tien
-    openedDoor: 0,       // Cua MC mo (co de)
-    otherDoor: 0,        // Cua con lai
-    switched: false,     // Co doi cua khong
-    finalChoice: 0,      // Cua cuoi cung
+    carPosition: 0,      // Cửa có xe (1, 2, 3)
+    firstChoice: 0,      // Cửa chọn đầu tiên
+    openedDoor: 0,       // Cửa MC mở (có dê)
+    otherDoor: 0,        // Cửa còn lại
+    switched: false,     // Có đổi cửa không
+    finalChoice: 0,      // Cửa cuối cùng
 
     // Statistics
     switchWins: 0,
@@ -55,6 +55,10 @@ const elements = {
     wins2: document.getElementById('wins-2'),
     losses2: document.getElementById('losses-2'),
     displayName: document.getElementById('display-name'),
+
+    // Progress bars
+    progressBar: document.getElementById('progress-bar'),
+    progressBar2: document.getElementById('progress-bar-2'),
 
     // Choose screen
     doors: document.querySelectorAll('#screen-choose .door'),
@@ -110,12 +114,18 @@ function updateStats() {
     elements.totalRounds2.textContent = gameState.totalRounds;
     elements.wins2.textContent = gameState.wins;
     elements.losses2.textContent = gameState.losses;
+
+    // Update progress bars
+    const progress = (gameState.currentRound / gameState.totalRounds) * 100;
+    if (elements.progressBar) elements.progressBar.style.width = progress + '%';
+    if (elements.progressBar2) elements.progressBar2.style.width = progress + '%';
 }
 
 function resetDoors() {
     document.querySelectorAll('.door').forEach(door => {
-        door.classList.remove('selected', 'opened', 'disabled', 'chosen', 'final-choice', 'win', 'lose');
-        door.querySelector('.door-content').className = 'door-content';
+        door.classList.remove('selected', 'opened', 'disabled', 'chosen', 'final-choice', 'win', 'lose', 'eliminated');
+        const content = door.querySelector('.door-content');
+        if (content) content.className = 'door-content';
     });
 }
 
@@ -140,7 +150,7 @@ function createConfetti() {
 
 // ===== GAME LOGIC =====
 function setupNewGame() {
-    // Random vi tri xe (1, 2, hoac 3)
+    // Random vị trí xe (1, 2, hoặc 3)
     gameState.carPosition = Math.floor(Math.random() * 3) + 1;
     gameState.firstChoice = 0;
     gameState.openedDoor = 0;
@@ -153,18 +163,18 @@ function setupNewGame() {
 }
 
 function handleDoorChoice(doorNum) {
-    if (gameState.firstChoice !== 0) return; // Da chon roi
+    if (gameState.firstChoice !== 0) return; // Đã chọn rồi
 
     gameState.firstChoice = doorNum;
 
-    // Highlight cua da chon
+    // Highlight cửa đã chọn
     elements.doors.forEach(door => {
         if (parseInt(door.dataset.door) === doorNum) {
             door.classList.add('selected');
         }
     });
 
-    // Delay truoc khi chuyen man hinh
+    // Delay trước khi chuyển màn hình
     setTimeout(() => {
         prepareSwitch();
         showScreen('screen-switch');
@@ -172,15 +182,15 @@ function handleDoorChoice(doorNum) {
 }
 
 function prepareSwitch() {
-    // Tim cua MC se mo (phai co de, khong phai cua nguoi choi chon)
+    // Tìm cửa MC sẽ mở (phải có dê, không phải cửa người chơi chọn)
     const possibleDoors = [1, 2, 3].filter(d =>
         d !== gameState.carPosition && d !== gameState.firstChoice
     );
 
-    // Neu co 2 cua co the mo, chon random
+    // Nếu có 2 cửa có thể mở, chọn random
     gameState.openedDoor = possibleDoors[Math.floor(Math.random() * possibleDoors.length)];
 
-    // Cua con lai (de nguoi choi doi sang)
+    // Cửa còn lại (để người chơi đổi sang)
     gameState.otherDoor = [1, 2, 3].find(d =>
         d !== gameState.firstChoice && d !== gameState.openedDoor
     );
@@ -191,18 +201,22 @@ function prepareSwitch() {
     elements.otherDoor.textContent = gameState.otherDoor;
     elements.stayDoorNum.textContent = gameState.firstChoice;
 
-    // Setup doors cho man hinh switch
+    // Setup doors cho màn hình switch
     [1, 2, 3].forEach(doorNum => {
         const door = document.getElementById(`switch-door-${doorNum}`);
-        door.classList.remove('selected', 'opened', 'disabled', 'chosen');
-        door.querySelector('.door-content').className = 'door-content';
+        door.classList.remove('selected', 'opened', 'disabled', 'chosen', 'eliminated');
+        const content = door.querySelector('.door-content');
+        if (content) content.className = 'door-content';
 
         if (doorNum === gameState.firstChoice) {
             door.classList.add('chosen');
         } else if (doorNum === gameState.openedDoor) {
-            // Mo cua co de
-            door.querySelector('.door-content').classList.add('goat');
-            setTimeout(() => door.classList.add('opened'), 300);
+            // Mở cửa có dê
+            if (content) content.classList.add('goat');
+            setTimeout(() => {
+                door.classList.add('opened');
+                door.classList.add('eliminated');
+            }, 300);
             door.classList.add('disabled');
         }
     });
@@ -214,7 +228,7 @@ function handleSwitch(didSwitch) {
 
     const won = gameState.finalChoice === gameState.carPosition;
 
-    // Cap nhat thong ke
+    // Cập nhật thống kê
     if (won) {
         gameState.wins++;
         if (didSwitch) gameState.switchWins++;
@@ -225,7 +239,7 @@ function handleSwitch(didSwitch) {
         else gameState.stayLosses++;
     }
 
-    // Luu game history
+    // Lưu game history
     const gameData = {
         round: gameState.currentRound,
         carPosition: gameState.carPosition,
@@ -238,44 +252,46 @@ function handleSwitch(didSwitch) {
     };
     gameState.games.push(gameData);
 
-    // Gui len Firebase
+    // Gửi lên Firebase
     sendGameToFirebase(gameData);
 
-    // Hien thi ket qua
+    // Hiển thị kết quả
     showResult(won, didSwitch);
 }
 
 function showResult(won, didSwitch) {
     // Setup result screen
     elements.resultHeader.className = 'result-header ' + (won ? 'win' : 'lose');
-    elements.resultTitle.textContent = won ? '🎉 THANG! 🎉' : '😢 THUA ROI!';
+    elements.resultTitle.textContent = won ? '🎉 THẮNG RỒI!' : '😢 THUA RỒI!';
 
-    const action = didSwitch ? 'DOI' : 'GIU';
-    elements.resultSubtitle.textContent = `Ban da ${action} cua`;
+    const action = didSwitch ? 'ĐỔI' : 'GIỮ';
+    elements.resultSubtitle.textContent = `Bạn đã ${action} cửa`;
 
     // Explanation
     if (won) {
         elements.explanationText.textContent = didSwitch
-            ? `Ban doi sang cua ${gameState.finalChoice} va trung XE! Chien thuat doi cua thang 66.7% theo ly thuyet.`
-            : `Ban giu cua ${gameState.finalChoice} va may man trung XE! Chi co 33.3% co hoi thoi.`;
+            ? `🔄 Bạn đổi sang cửa ${gameState.finalChoice} và trúng XE! Chiến thuật đổi cửa thắng 66.7% theo lý thuyết.`
+            : `✋ Bạn giữ cửa ${gameState.finalChoice} và may mắn trúng XE! Chỉ có 33.3% cơ hội thôi đấy.`;
     } else {
         elements.explanationText.textContent = didSwitch
-            ? `Ban doi sang cua ${gameState.finalChoice} nhung la DE. Xe o cua ${gameState.carPosition}. Lan sau se may hon!`
-            : `Ban giu cua ${gameState.finalChoice} nhung la DE. Xe o cua ${gameState.carPosition}. Thu doi cua lan sau xem!`;
+            ? `🔄 Bạn đổi sang cửa ${gameState.finalChoice} nhưng là DÊ 🐐. Xe ở cửa ${gameState.carPosition}. Lần sau sẽ may hơn!`
+            : `✋ Bạn giữ cửa ${gameState.finalChoice} nhưng là DÊ 🐐. Xe ở cửa ${gameState.carPosition}. Thử đổi cửa lần sau xem!`;
     }
 
-    // Setup doors - mo tat ca
+    // Setup doors - mở tất cả
     [1, 2, 3].forEach(doorNum => {
         const door = document.getElementById(`result-door-${doorNum}`);
-        door.classList.remove('selected', 'opened', 'disabled', 'chosen', 'final-choice', 'win', 'lose');
+        door.classList.remove('selected', 'opened', 'disabled', 'chosen', 'final-choice', 'win', 'lose', 'eliminated');
 
         const content = door.querySelector('.door-content');
-        content.className = 'door-content';
+        if (content) {
+            content.className = 'door-content';
 
-        if (doorNum === gameState.carPosition) {
-            content.classList.add('car');
-        } else {
-            content.classList.add('goat');
+            if (doorNum === gameState.carPosition) {
+                content.classList.add('car');
+            } else {
+                content.classList.add('goat');
+            }
         }
 
         if (doorNum === gameState.finalChoice) {
@@ -283,20 +299,20 @@ function showResult(won, didSwitch) {
             door.classList.add(won ? 'win' : 'lose');
         }
 
-        // Mo cua voi delay
+        // Mở cửa với delay
         setTimeout(() => door.classList.add('opened'), doorNum * 200);
     });
 
-    // Confetti neu thang
+    // Confetti nếu thắng
     if (won) {
         setTimeout(createConfetti, 500);
     }
 
     // Update button text
     if (gameState.currentRound >= gameState.totalRounds) {
-        elements.btnNext.textContent = 'XEM KET QUA';
+        elements.btnNext.textContent = '📊 XEM KẾT QUẢ';
     } else {
-        elements.btnNext.textContent = 'CHOI TIEP';
+        elements.btnNext.textContent = '▶️ LƯỢT TIẾP THEO';
     }
 
     showScreen('screen-result');
@@ -354,7 +370,7 @@ function sendGameToFirebase(gameData) {
     const db = window.firebaseConfig.database;
     const sessionId = window.firebaseConfig.SESSION_ID;
 
-    // Gui game data
+    // Gửi game data
     const gameRef = db.ref(`sessions/${sessionId}/games`).push();
     gameRef.set({
         ...gameData,
@@ -362,7 +378,7 @@ function sendGameToFirebase(gameData) {
         playerName: gameState.playerName
     });
 
-    // Cap nhat stats
+    // Cập nhật stats
     updateFirebaseStats();
 }
 
@@ -415,7 +431,6 @@ function registerPlayer() {
 
 function submitToGoogleSheet() {
     // Google Apps Script Web App URL
-    // Thay bang URL cua ban sau khi deploy Apps Script
     const GOOGLE_SHEET_URL = window.firebaseConfig?.GOOGLE_SHEET_URL || '';
 
     const totalGames = gameState.wins + gameState.losses;
@@ -434,14 +449,13 @@ function submitToGoogleSheet() {
         sessionId: window.firebaseConfig?.SESSION_ID || 'unknown'
     };
 
-    // Kiem tra URL da duoc cau hinh chua
+    // Kiểm tra URL đã được cấu hình chưa
     if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === '') {
-        alert(`Da luu ket qua!\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins} (${data.winRate})\n\nDoi cua: ${data.switchWins}\nGiu cua: ${data.stayWins}\n\n(Cau hinh GOOGLE_SHEET_URL de tu dong luu vao Sheet)`);
+        alert(`✅ Đã lưu kết quả!\n\n👤 Tên: ${data.name}\n🎮 Tổng: ${data.totalGames} lượt\n🏆 Thắng: ${data.wins} (${data.winRate})\n\n🔄 Đổi cửa: ${data.switchWins}\n✋ Giữ cửa: ${data.stayWins}\n\n(Cấu hình GOOGLE_SHEET_URL để tự động lưu vào Sheet)`);
         return;
     }
 
-    // Gui data len Google Sheet qua URL parameters (GET request)
-    // Cach nay hoat dong tot hon voi CORS policy
+    // Gửi data lên Google Sheet qua URL parameters (GET request)
     const params = new URLSearchParams(data).toString();
     const fullUrl = `${GOOGLE_SHEET_URL}?${params}`;
 
@@ -450,11 +464,11 @@ function submitToGoogleSheet() {
         mode: 'no-cors'
     })
     .then(() => {
-        alert(`Da gui ket qua thanh cong!\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins} (${data.winRate})\n\nDoi cua: ${data.switchWins}\nGiu cua: ${data.stayWins}`);
+        alert(`✅ Đã gửi kết quả thành công!\n\n👤 Tên: ${data.name}\n🎮 Tổng: ${data.totalGames} lượt\n🏆 Thắng: ${data.wins} (${data.winRate})\n\n🔄 Đổi cửa: ${data.switchWins}\n✋ Giữ cửa: ${data.stayWins}`);
     })
     .catch(error => {
-        console.error('Loi gui Google Sheet:', error);
-        alert(`Ket qua cua ban:\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins}\n\n(Loi ket noi - vui long thu lai)`);
+        console.error('Lỗi gửi Google Sheet:', error);
+        alert(`📊 Kết quả của bạn:\n\n👤 Tên: ${data.name}\n🎮 Tổng: ${data.totalGames} lượt\n🏆 Thắng: ${data.wins}\n\n(Lỗi kết nối - vui lòng thử lại)`);
     });
 }
 
@@ -503,7 +517,7 @@ function initEventListeners() {
 
 // ===== INITIALIZATION =====
 function init() {
-    // Hien thi session ID
+    // Hiển thị session ID
     elements.sessionId.textContent = window.firebaseConfig?.SESSION_ID || 'offline-mode';
 
     // Init event listeners
@@ -512,8 +526,8 @@ function init() {
     // Show welcome screen
     showScreen('screen-welcome');
 
-    console.log('🎮 Monty Hall Game loaded!');
-    console.log(`📡 Firebase: ${window.firebaseConfig?.isFirebaseEnabled ? 'Connected' : 'Offline'}`);
+    console.log('🎮 Monty Hall Game đã sẵn sàng!');
+    console.log(`📡 Firebase: ${window.firebaseConfig?.isFirebaseEnabled ? 'Đã kết nối' : 'Offline'}`);
 }
 
 // Start game when DOM ready

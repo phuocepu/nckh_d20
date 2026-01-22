@@ -14,160 +14,198 @@
         <!-- SCREEN 1: Welcome -->
         <div id="screen-welcome" class="screen active">
             <div class="header">
-                <h1>MONTY HALL SHOW</h1>
-                <p class="subtitle">Game Show Xac Suat</p>
+                <h1>🎪 MONTY HALL</h1>
+                <p class="subtitle">Trò Chơi Xác Suất Kinh Điển</p>
             </div>
 
             <div class="game-intro">
                 <div class="doors-preview">
-                    <div class="door-small">1</div>
-                    <div class="door-small">2</div>
-                    <div class="door-small">3</div>
+                    <div class="door-small">🚪</div>
+                    <div class="door-small">🚪</div>
+                    <div class="door-small">🚪</div>
                 </div>
-                <div class="intro-text">
-                    <p><strong>Luat choi:</strong></p>
-                    <p>Co 3 cua: 1 cua co <span class="highlight-car">XE</span>, 2 cua co <span class="highlight-goat">DE</span></p>
-                    <p>Ban chon 1 cua, MC se mo 1 cua co de.</p>
-                    <p>Ban co muon <strong>DOI</strong> sang cua con lai?</p>
+
+                <div class="intro-rules">
+                    <div class="rule-step">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Có <strong>3 cửa</strong>: 1 cửa có <span class="highlight-car">🚗 XE HƠI</span>, 2 cửa có <span class="highlight-goat">🐐 DÊ</span></span>
+                    </div>
+                    <div class="rule-step">
+                        <span class="step-number">2</span>
+                        <span class="step-text">Bạn <strong>chọn 1 cửa</strong>, MC sẽ mở 1 cửa có dê</span>
+                    </div>
+                    <div class="rule-step">
+                        <span class="step-number">3</span>
+                        <span class="step-text">Bạn có muốn <span class="highlight-switch">ĐỔI</span> sang cửa còn lại không?</span>
+                    </div>
+                </div>
+
+                <div class="intro-question">
+                    <p>💡 <strong>Câu hỏi:</strong> Đổi hay giữ cửa có lợi hơn?</p>
                 </div>
             </div>
 
             <div class="input-section">
-                <input type="text" id="player-name" placeholder="Nhap ten cua ban..." maxlength="30">
-                <button id="btn-start" class="btn-primary" disabled>BAT DAU CHOI</button>
+                <input type="text" id="player-name" placeholder="✏️ Nhập tên của bạn..." maxlength="30">
+                <button id="btn-start" class="btn-primary" disabled>🎮 BẮT ĐẦU CHƠI</button>
             </div>
 
             <div class="session-info">
-                <small>Session: <span id="session-id">dang ket noi...</span></small>
+                <small>Session: <span id="session-id">đang kết nối...</span></small>
             </div>
         </div>
 
         <!-- SCREEN 2: Choose Door -->
         <div id="screen-choose" class="screen">
             <div class="game-header">
-                <div class="stats">
-                    <span>Luot: <span id="current-round">1</span>/<span id="total-rounds">5</span></span>
-                    <span class="win">Thang: <span id="wins">0</span></span>
-                    <span class="lose">Thua: <span id="losses">0</span></span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                    <span class="progress-text">Lượt <span id="current-round">1</span>/<span id="total-rounds">5</span></span>
                 </div>
-                <div class="player-name-display">
-                    <span id="display-name"></span>
+                <div class="score-display">
+                    <span class="win">✅ <span id="wins">0</span></span>
+                    <span class="lose">❌ <span id="losses">0</span></span>
                 </div>
             </div>
 
-            <h2 class="instruction">CHON MOT CUA!</h2>
+            <div class="player-badge">
+                <span id="display-name"></span>
+            </div>
+
+            <h2 class="instruction">👆 CHỌN MỘT CỬA!</h2>
 
             <div class="doors-container">
                 <div class="door" data-door="1">
-                    <div class="door-front">
-                        <span class="door-number">1</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">1</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="2">
-                    <div class="door-front">
-                        <span class="door-number">2</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">2</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="3">
-                    <div class="door-front">
-                        <span class="door-number">3</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">3</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
             </div>
 
-            <p class="hint">(Tap vao cua de chon)</p>
+            <p class="hint">👆 Chạm vào cửa để chọn</p>
         </div>
 
         <!-- SCREEN 3: Switch Decision -->
         <div id="screen-switch" class="screen">
             <div class="game-header">
-                <div class="stats">
-                    <span>Luot: <span id="current-round-2">1</span>/<span id="total-rounds-2">5</span></span>
-                    <span class="win">Thang: <span id="wins-2">0</span></span>
-                    <span class="lose">Thua: <span id="losses-2">0</span></span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar-2"></div>
+                    <span class="progress-text">Lượt <span id="current-round-2">1</span>/<span id="total-rounds-2">5</span></span>
+                </div>
+                <div class="score-display">
+                    <span class="win">✅ <span id="wins-2">0</span></span>
+                    <span class="lose">❌ <span id="losses-2">0</span></span>
                 </div>
             </div>
 
             <div class="mc-message">
-                <div class="mc-avatar">MC</div>
+                <div class="mc-avatar">🎩</div>
                 <div class="mc-speech">
-                    <p>Ban da chon <strong>CUA <span id="chosen-door">1</span></strong></p>
-                    <p>Toi mo <strong>CUA <span id="opened-door">3</span></strong> - co DE!</p>
-                    <p class="question">Ban co muon <strong>DOI</strong> sang <strong>CUA <span id="other-door">2</span></strong> khong?</p>
+                    <p>Bạn đã chọn <strong class="highlight-chosen">CỬA <span id="chosen-door">1</span></strong></p>
+                    <p>Tôi mở <strong class="highlight-opened">CỬA <span id="opened-door">3</span></strong> — có 🐐 DÊ!</p>
+                    <p class="question">🤔 Bạn có muốn <strong class="highlight-switch">ĐỔI</strong> sang <strong>CỬA <span id="other-door">2</span></strong>?</p>
                 </div>
             </div>
 
             <div class="doors-container switch-view">
                 <div class="door" data-door="1" id="switch-door-1">
-                    <div class="door-front">
-                        <span class="door-number">1</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">1</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="2" id="switch-door-2">
-                    <div class="door-front">
-                        <span class="door-number">2</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">2</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="3" id="switch-door-3">
-                    <div class="door-front">
-                        <span class="door-number">3</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">3</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
             </div>
 
             <div class="decision-buttons">
-                <button id="btn-switch" class="btn-switch">DOI CUA</button>
-                <button id="btn-stay" class="btn-stay">GIU CUA <span id="stay-door-num">1</span></button>
+                <button id="btn-switch" class="btn-switch">🔄 ĐỔI CỬA</button>
+                <button id="btn-stay" class="btn-stay">✋ GIỮ CỬA <span id="stay-door-num">1</span></button>
             </div>
         </div>
 
         <!-- SCREEN 4: Result -->
         <div id="screen-result" class="screen">
             <div class="result-header" id="result-header">
-                <h2 id="result-title">THANG!</h2>
+                <h2 id="result-title">🎉 THẮNG!</h2>
                 <p id="result-subtitle"></p>
             </div>
 
             <div class="doors-container result-view">
                 <div class="door" data-door="1" id="result-door-1">
-                    <div class="door-front">
-                        <span class="door-number">1</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">1</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="2" id="result-door-2">
-                    <div class="door-front">
-                        <span class="door-number">2</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">2</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
                 <div class="door" data-door="3" id="result-door-3">
-                    <div class="door-front">
-                        <span class="door-number">3</span>
+                    <div class="door-frame">
+                        <div class="door-panel">
+                            <span class="door-number">3</span>
+                        </div>
                     </div>
-                    <div class="door-back">
+                    <div class="door-content-hidden">
                         <span class="door-content"></span>
                     </div>
                 </div>
@@ -177,54 +215,56 @@
                 <p id="explanation-text"></p>
             </div>
 
-            <button id="btn-next" class="btn-primary">CHOI TIEP</button>
+            <button id="btn-next" class="btn-primary">▶️ LƯỢT TIẾP THEO</button>
         </div>
 
         <!-- SCREEN 5: Final Stats -->
         <div id="screen-final" class="screen">
-            <h2>KET QUA CUA BAN</h2>
+            <h2>🏆 KẾT QUẢ CỦA BẠN</h2>
 
             <div class="final-stats">
                 <div class="stat-card">
-                    <div class="stat-label">Ten</div>
-                    <div class="stat-value" id="final-name">-</div>
+                    <div class="stat-label">👤 Tên</div>
+                    <div class="stat-value name-value" id="final-name">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Tong luot</div>
+                    <div class="stat-label">🎮 Tổng lượt</div>
                     <div class="stat-value" id="final-total">5</div>
                 </div>
                 <div class="stat-card highlight">
-                    <div class="stat-label">Thang</div>
-                    <div class="stat-value" id="final-wins">0</div>
+                    <div class="stat-label">🏆 Số lần thắng</div>
+                    <div class="stat-value big" id="final-wins">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Ty le</div>
+                    <div class="stat-label">📊 Tỉ lệ thắng</div>
                     <div class="stat-value" id="final-rate">0%</div>
                 </div>
             </div>
 
             <div class="strategy-breakdown">
-                <h3>Phan tich chien thuat:</h3>
+                <h3>📈 Phân tích chiến thuật</h3>
                 <div class="strategy-row">
-                    <span class="strategy-label">Doi cua:</span>
+                    <span class="strategy-label">🔄 Đổi cửa:</span>
                     <div class="strategy-bar">
                         <div class="bar-fill switch-bar" id="switch-bar"></div>
                     </div>
                     <span class="strategy-stat" id="switch-stat">0/0</span>
                 </div>
                 <div class="strategy-row">
-                    <span class="strategy-label">Giu cua:</span>
+                    <span class="strategy-label">✋ Giữ cửa:</span>
                     <div class="strategy-bar">
                         <div class="bar-fill stay-bar" id="stay-bar"></div>
                     </div>
                     <span class="strategy-stat" id="stay-stat">0/0</span>
                 </div>
-                <p class="theory-note">Ly thuyet: Doi cua = 66.7%, Giu cua = 33.3%</p>
+                <div class="theory-note">
+                    <p>📚 <strong>Lý thuyết:</strong> Đổi cửa = <span class="highlight-switch">66.7%</span>, Giữ cửa = <span class="highlight-stay">33.3%</span></p>
+                </div>
             </div>
 
             <div class="final-buttons">
-                <button id="btn-play-more" class="btn-primary">CHOI THEM 5 LUOT</button>
-                <button id="btn-submit" class="btn-secondary">GUI KET QUA</button>
+                <button id="btn-play-more" class="btn-primary">🔄 CHƠI THÊM 5 LƯỢT</button>
+                <button id="btn-submit" class="btn-secondary">📤 GỬI KẾT QUẢ</button>
             </div>
         </div>
 
