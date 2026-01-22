@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monty Hall - Dashboard Giang Vien</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        .session-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .session-info span {
+            color: #aaa;
+        }
+
+        .session-info strong {
+            color: #fff;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+
+        .qr-section h3 {
+            margin-bottom: 15px;
+            color: #f39c12;
+        }
+
+        #qr-code {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .game-url {
+            color: #3498db;
+            word-break: break-all;
+            font-size: 0.9em;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card.highlight {
+            background: linear-gradient(45deg, rgba(243, 156, 18, 0.3), rgba(230, 126, 34, 0.3));
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #f39c12;
+        }
+
+        .stat-value.green { color: #2ecc71; }
+        .stat-value.red { color: #e74c3c; }
+        .stat-value.blue { color: #3498db; }
+
+        /* Strategy Comparison */
+        .strategy-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .strategy-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f39c12;
+        }
+
+        .strategy-row {
+            margin-bottom: 25px;
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .strategy-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .strategy-name.switch { color: #3498db; }
+        .strategy-name.stay { color: #95a5a6; }
+
+        .strategy-stats {
+            color: #aaa;
+        }
+
+        .bar-container {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: width 0.5s ease;
+        }
+
+        .bar-fill.switch {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+        }
+
+        .bar-fill.stay {
+            background: linear-gradient(90deg, #95a5a6, #7f8c8d);
+        }
+
+        .theory-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #fff;
+            opacity: 0.5;
+        }
+
+        .theory-label {
+            position: absolute;
+            top: -20px;
+            font-size: 0.7em;
+            color: #aaa;
+            transform: translateX(-50%);
+        }
+
+        /* Players Table */
+        .players-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .players-section h2 {
+            margin-bottom: 20px;
+            color: #f39c12;
+        }
+
+        .players-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .players-table th,
+        .players-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .players-table th {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .players-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .players-table .win-rate {
+            font-weight: bold;
+        }
+
+        .players-table .win-rate.good { color: #2ecc71; }
+        .players-table .win-rate.bad { color: #e74c3c; }
+
+        /* Live Indicator */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 15px;
+            background: rgba(231, 76, 60, 0.3);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #e74c3c;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Offline Warning */
+        .offline-warning {
+            background: rgba(231, 76, 60, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .offline-warning h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .players-table {
+                font-size: 0.85em;
+            }
+
+            .players-table th,
+            .players-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- QR Code: Dung API thay vi thu vien -->
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 MONTY HALL - DASHBOARD</h1>
+            <div class="session-info">
+                <span>Session: <strong id="session-id">-</strong></span>
+                <span>Nguoi choi: <strong id="player-count">0</strong></span>
+                <span class="live-indicator">
+                    <span class="live-dot"></span>
+                    LIVE
+                </span>
+            </div>
+        </div>
+
+        <!-- Offline Warning (shown when Firebase not connected) -->
+        <div id="offline-warning" class="offline-warning" style="display: none;">
+            <h3>⚠️ Firebase chua ket noi</h3>
+            <p>Vui long cau hinh Firebase trong file <code>js/firebase-config.js</code></p>
+            <p>Xem huong dan trong file README.md</p>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-section">
+            <h3>📱 Sinh vien quet QR de choi:</h3>
+            <div id="qr-code"></div>
+            <p class="game-url" id="game-url">Loading...</p>
+        </div>
+
+        <!-- Main Stats -->
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Tong luot choi</div>
+                <div class="stat-value" id="total-games">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Doi cua - Thang</div>
+                <div class="stat-value blue" id="switch-wins">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Giu cua - Thang</div>
+                <div class="stat-value" id="stay-wins">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Doi cua - Thua</div>
+                <div class="stat-value red" id="switch-losses">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Giu cua - Thua</div>
+                <div class="stat-value red" id="stay-losses">0</div>
+            </div>
+        </div>
+
+        <!-- Strategy Comparison -->
+        <div class="strategy-section">
+            <h2>📈 So sanh Chien thuat</h2>
+
+            <div class="strategy-row">
+                <div class="strategy-header">
+                    <span class="strategy-name switch">🔄 DOI CUA</span>
+                    <span class="strategy-stats" id="switch-stats">0/0 (0%)</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill switch" id="switch-bar" style="width: 0%">0%</div>
+                    <div class="theory-line" style="left: 66.7%">
+                        <span class="theory-label">LT: 66.7%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-row">
+                <div class="strategy-header">
+                    <span class="strategy-name stay">✋ GIU CUA</span>
+                    <span class="strategy-stats" id="stay-stats">0/0 (0%)</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill stay" id="stay-bar" style="width: 0%">0%</div>
+                    <div class="theory-line" style="left: 33.3%">
+                        <span class="theory-label">LT: 33.3%</span>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center; color: #888; margin-top: 20px;">
+                LT = Ly thuyet (Doi cua thang 66.7%, Giu cua thang 33.3%)
+            </p>
+        </div>
+
+        <!-- Players Leaderboard -->
+        <div class="players-section">
+            <h2>🏆 Bang xep hang</h2>
+            <table class="players-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Ten</th>
+                        <th>Luot</th>
+                        <th>Thang</th>
+                        <th>Ty le</th>
+                        <th>Doi cua</th>
+                    </tr>
+                </thead>
+                <tbody id="players-tbody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #888;">
+                            Chua co nguoi choi...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-secondary" onclick="exportData()">📤 Export CSV</button>
+            <button class="btn btn-danger" onclick="resetSession()">🔄 Reset Session</button>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
