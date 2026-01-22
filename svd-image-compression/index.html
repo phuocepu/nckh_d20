@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVD Image Compression - Ma Trận Nén Ảnh</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- SCREEN 1: Welcome + Upload -->
+        <div id="screen-welcome" class="screen active">
+            <div class="header">
+                <h1>🖼️ MA TRẬN NÉN ẢNH</h1>
+                <p class="subtitle">Singular Value Decomposition (SVD)</p>
+            </div>
+
+            <div class="intro-section">
+                <div class="math-preview">
+                    <div class="matrix-equation">
+                        <span class="matrix">A</span>
+                        <span class="equals">=</span>
+                        <span class="matrix highlight-u">U</span>
+                        <span class="times">×</span>
+                        <span class="matrix highlight-sigma">Σ</span>
+                        <span class="times">×</span>
+                        <span class="matrix highlight-v">Vᵀ</span>
+                    </div>
+                </div>
+
+                <div class="intro-steps">
+                    <div class="step">
+                        <span class="step-icon">📷</span>
+                        <span class="step-text">Mỗi ảnh là một <strong>ma trận số</strong></span>
+                    </div>
+                    <div class="step">
+                        <span class="step-icon">✂️</span>
+                        <span class="step-text">SVD tách ma trận → giữ <strong>phần quan trọng</strong></span>
+                    </div>
+                    <div class="step">
+                        <span class="step-icon">📦</span>
+                        <span class="step-text">Kết quả: Ảnh <strong>nhỏ hơn 90%</strong> vẫn rõ!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <input type="file" id="file-input" accept="image/*" style="display:none;">
+                <label for="file-input" class="upload-box" id="upload-box">
+                    <div class="upload-content">
+                        <span class="upload-icon">📁</span>
+                        <p class="upload-text">Chọn ảnh hoặc kéo thả vào đây</p>
+                        <p class="upload-hint">PNG, JPG, JPEG</p>
+                    </div>
+                </label>
+
+                <div class="sample-images">
+                    <p class="sample-title">Hoặc chọn ảnh mẫu:</p>
+                    <div class="sample-grid">
+                        <div class="sample-item" data-sample="gradient">
+                            <div class="sample-preview gradient-sample"></div>
+                            <span>Gradient</span>
+                        </div>
+                        <div class="sample-item" data-sample="checkerboard">
+                            <div class="sample-preview checker-sample"></div>
+                            <span>Checkerboard</span>
+                        </div>
+                        <div class="sample-item" data-sample="circles">
+                            <div class="sample-preview circles-sample"></div>
+                            <span>Circles</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: Confirm & Start -->
+        <div id="screen-size" class="screen">
+            <div class="header-small">
+                <button class="btn-back" id="btn-back-size">← Quay lại</button>
+                <h2>📐 Xác nhận ảnh</h2>
+            </div>
+
+            <div class="image-info-card">
+                <div class="original-preview">
+                    <img id="preview-original" src="" alt="Preview">
+                </div>
+                <div class="image-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Kích thước gốc:</span>
+                        <span class="detail-value" id="original-size">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Xử lý:</span>
+                        <span class="detail-value">200 × 200</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="size-options">
+                <div class="color-mode-toggle">
+                    <span class="toggle-label">Chế độ màu:</span>
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn active" data-mode="grayscale">⬛ Grayscale</button>
+                        <button class="toggle-btn" data-mode="color">🌈 Color</button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-start-compress" class="btn-primary">
+                🚀 BẮT ĐẦU NÉN ẢNH
+            </button>
+        </div>
+
+        <!-- SCREEN 3: Processing -->
+        <div id="screen-processing" class="screen">
+            <div class="processing-content">
+                <div class="processing-animation">
+                    <div class="matrix-anim">
+                        <span class="m-a">A</span>
+                        <span class="m-eq">=</span>
+                        <span class="m-u">U</span>
+                        <span class="m-s">Σ</span>
+                        <span class="m-v">Vᵀ</span>
+                    </div>
+                </div>
+                <h2 id="processing-title">Đang phân tích ma trận...</h2>
+                <p id="processing-status">Tính toán SVD cho ảnh <span id="proc-size">200×200</span></p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="proc-progress"></div>
+                </div>
+                <p class="processing-hint" id="processing-hint">Vui lòng chờ trong giây lát...</p>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: Result / Interactive -->
+        <div id="screen-result" class="screen">
+            <div class="header-small">
+                <button class="btn-back" id="btn-back-result">← Ảnh khác</button>
+                <h2>🎛️ Điều chỉnh nén ảnh</h2>
+            </div>
+
+            <div class="comparison-container">
+                <div class="image-card">
+                    <div class="image-label">ẢNH GỐC</div>
+                    <canvas id="canvas-original"></canvas>
+                    <div class="image-stats">
+                        <span id="stats-original-size">200 × 200</span>
+                    </div>
+                </div>
+                <div class="image-card">
+                    <div class="image-label">ẢNH NÉN (SVD)</div>
+                    <canvas id="canvas-compressed"></canvas>
+                    <div class="image-stats">
+                        <span id="stats-k">k = 50</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-section">
+                <div class="slider-header">
+                    <span class="slider-label">Số Singular Values (k):</span>
+                    <span class="slider-value" id="k-value">50</span>
+                    <span class="slider-max">/ <span id="k-max">200</span></span>
+                </div>
+                <input type="range" id="k-slider" min="1" max="200" value="50" class="slider">
+                <div class="slider-hints">
+                    <span>Nén nhiều (mờ)</span>
+                    <span>Nén ít (rõ)</span>
+                </div>
+            </div>
+
+            <div class="preset-buttons">
+                <button class="preset-btn" data-k="1">k=1</button>
+                <button class="preset-btn" data-k="5">k=5</button>
+                <button class="preset-btn" data-k="10">k=10</button>
+                <button class="preset-btn" data-k="20">k=20</button>
+                <button class="preset-btn" data-k="50">k=50</button>
+                <button class="preset-btn" data-k="100">k=100</button>
+                <button class="preset-btn" data-k="max">Full</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Tỉ lệ nén</span>
+                        <span class="stat-value" id="compression-ratio">50%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💾</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Dữ liệu giữ lại</span>
+                        <span class="stat-value" id="data-kept">25%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Thời gian SVD</span>
+                        <span class="stat-value" id="svd-time">1.2s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explanation-card">
+                <h3>💡 Giải thích</h3>
+                <p id="explanation-text">
+                    Với <strong>k = 50</strong>, ta chỉ giữ <strong>50 singular values</strong> lớn nhất.
+                    Ma trận gốc <strong>200×200 = 40,000</strong> số được biểu diễn bằng
+                    <strong>50×(200+200+1) = 20,050</strong> số → tiết kiệm <strong>50%</strong> dữ liệu!
+                </p>
+            </div>
+
+            <button id="btn-show-math" class="btn-secondary">
+                📐 Xem chi tiết Toán học
+            </button>
+        </div>
+
+        <!-- SCREEN 5: Math Details (Optional) -->
+        <div id="screen-math" class="screen">
+            <div class="header-small">
+                <button class="btn-back" id="btn-back-math">← Quay lại</button>
+                <h2>📐 Chi tiết Toán học</h2>
+            </div>
+
+            <div class="math-section">
+                <div class="math-card">
+                    <h3>Công thức SVD</h3>
+                    <div class="formula">
+                        A<sub>m×n</sub> = U<sub>m×m</sub> × Σ<sub>m×n</sub> × V<sup>T</sup><sub>n×n</sub>
+                    </div>
+                    <ul class="math-list">
+                        <li><strong>A</strong>: Ma trận ảnh gốc (m × n pixels)</li>
+                        <li><strong>U</strong>: Ma trận trực giao trái</li>
+                        <li><strong>Σ</strong>: Ma trận đường chéo (singular values)</li>
+                        <li><strong>V<sup>T</sup></strong>: Ma trận trực giao phải (chuyển vị)</li>
+                    </ul>
+                </div>
+
+                <div class="math-card">
+                    <h3>Nén ảnh với k singular values</h3>
+                    <div class="formula">
+                        A<sub>k</sub> = U<sub>k</sub> × Σ<sub>k</sub> × V<sub>k</sub><sup>T</sup>
+                    </div>
+                    <p>Chỉ giữ <strong>k</strong> singular values lớn nhất:</p>
+                    <ul class="math-list">
+                        <li>Dữ liệu lưu: k × (m + n + 1) thay vì m × n</li>
+                        <li>k càng nhỏ → nén càng nhiều → mất chi tiết</li>
+                        <li>k càng lớn → nén ít → giữ chi tiết</li>
+                    </ul>
+                </div>
+
+                <div class="math-card">
+                    <h3>Singular Values của ảnh hiện tại</h3>
+                    <canvas id="canvas-sv-chart" height="200"></canvas>
+                    <p class="chart-note">Biểu đồ cho thấy singular values giảm nhanh → chỉ cần giữ một số ít!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script src="js/svd.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
