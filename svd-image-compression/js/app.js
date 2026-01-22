@@ -595,9 +595,16 @@ function reconstructColorToImageData(svdR, svdG, svdB, k, size) {
 }
 
 function updateStats(k, size) {
-    const originalData = size * size;
-    const compressedData = k * (size + size + 1);
-    const ratio = Math.max(0, (1 - compressedData / originalData) * 100);
+    const originalValues = size * size;
+    const compressedValues = k * (size + size + 1);
+    const ratio = Math.max(0, (1 - compressedValues / originalValues) * 100);
+
+    // Calculate conceptual sizes in KB (same unit for both to show compression ratio)
+    // This is for educational purposes - showing "amount of information" stored
+    const channelMultiplier = state.colorMode === 'color' ? 3 : 1;
+    const bytesPerValue = 4; // Conceptual: 4 bytes per number
+    const originalSizeKB = (originalValues * channelMultiplier * bytesPerValue) / 1024;
+    const compressedSizeKB = (compressedValues * channelMultiplier * bytesPerValue) / 1024;
 
     // Energy preserved
     const S = state.colorMode === 'grayscale' ? state.svdData.S : state.svdDataR.S;
@@ -624,6 +631,9 @@ function updateStats(k, size) {
     else if (psnr >= 20) psnrQuality = '(Chấp nhận)';
     else psnrQuality = '(Kém)';
 
+    // Format size display
+    const formatSize = (kb) => kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb.toFixed(0) + ' KB';
+
     elements.explanationText.innerHTML = `
         Với <strong>k = ${k}</strong>, ta chỉ giữ <strong>${k} singular values</strong> lớn nhất.
         <br><br>
@@ -631,7 +641,7 @@ function updateStats(k, size) {
         <br>
         ⚡ <strong>Energy = ${energyPreserved.toFixed(1)}%</strong> năng lượng giữ lại
         <br>
-        💾 <strong>Nén ${ratio.toFixed(0)}%</strong> (${originalData.toLocaleString()} → ${compressedData.toLocaleString()} số)
+        💾 <strong>Nén ${ratio.toFixed(0)}%</strong> (${formatSize(originalSizeKB)} → ${formatSize(compressedSizeKB)})
     `;
 }
 
