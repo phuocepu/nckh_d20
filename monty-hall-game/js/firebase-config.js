@@ -42,7 +42,7 @@ const TOTAL_ROUNDS = 5;
 // Google Sheet URL (Apps Script Web App)
 // Huong dan: Xem README.md phan "Backup Google Sheet"
 // Sau khi deploy Apps Script, paste URL vao day
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxfnJ1IaO9m428xXkm27UP-cn7179XAkO6dFxNUKNz-lyIYXSlUodm6E2rJm3AL0q94/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyAPyBLRzBWjZy_Ty3nEs4FumxbDcSJufp78D5wlkNjCzMWEINCpCNsWsa-b0X-G7_uGw/exec";
 
 // ===== KHONG CAN CHINH SUA DUOI DAY =====
 

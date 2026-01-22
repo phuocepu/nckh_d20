@@ -440,14 +440,14 @@ function submitToGoogleSheet() {
         return;
     }
 
-    // Gui data len Google Sheet
-    fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors', // Google Apps Script yeu cau no-cors
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+    // Gui data len Google Sheet qua URL parameters (GET request)
+    // Cach nay hoat dong tot hon voi CORS policy
+    const params = new URLSearchParams(data).toString();
+    const fullUrl = `${GOOGLE_SHEET_URL}?${params}`;
+
+    fetch(fullUrl, {
+        method: 'GET',
+        mode: 'no-cors'
     })
     .then(() => {
         alert(`Da gui ket qua thanh cong!\n\nTen: ${data.name}\nTong: ${data.totalGames} luot\nThang: ${data.wins} (${data.winRate})\n\nDoi cua: ${data.switchWins}\nGiu cua: ${data.stayWins}`);
