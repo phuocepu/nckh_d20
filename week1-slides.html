@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 1: Khởi động + Môi trường - NCKH Toán Tin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .nav-section h3 {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: #555;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #f0f4ff;
+            border-left-color: #667eea;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            background: white;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1;
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        /* Slide Content */
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-size: 24px;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #555;
+            margin: 15px 0;
+        }
+
+        /* Image Styles */
+        .image-container {
+            margin: 30px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+
+        .image-container img {
+            max-width: 90%;
+            max-height: 60vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .caption {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Demo iframe container */
+        .demo-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 30px auto;
+            position: relative;
+        }
+
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .iframe-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .demo-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .demo-preview:hover {
+            transform: scale(1.02);
+        }
+
+        .demo-preview.hidden {
+            display: none;
+        }
+
+        .demo-preview-icon {
+            font-size: 64px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .demo-preview-text {
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .demo-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .demo-loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .demo-error {
+            display: none;
+            padding: 20px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .demo-error.show {
+            display: block;
+        }
+
+        .open-new-tab-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .open-new-tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            max-width: 900px;
+            margin: 30px auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 30px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #c586c0;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .function {
+            color: #dcdcaa;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 1500;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+
+            .progress-bar {
+                left: 0;
+            }
+
+            .slide {
+                padding: 80px 20px 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            .image-container img {
+                max-width: 100%;
+            }
+
+            .nav-controls {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+
+        /* Checklist */
+        .checklist {
+            text-align: left;
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .checklist-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .checklist-item::before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <h2>📚 Tuần 1: Khởi động</h2>
+
+            <div class="nav-section">
+                <h3>Giới thiệu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Kỹ năng cốt lõi</div>
+                <div class="nav-item" data-slide="2">Lịch 16 tuần</div>
+                <div class="nav-item" data-slide="3">Chủ đề tuần 1</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Demos</h3>
+                <div class="nav-item" data-slide="4">Gradient Descent</div>
+                <div class="nav-item" data-slide="5">SVD Compression</div>
+                <div class="nav-item" data-slide="6">Monty Hall</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>MATLAB vs Python</h3>
+                <div class="nav-item" data-slide="7">So sánh</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Cloud - Colaboratory</h3>
+                <div class="nav-item" data-slide="8">Bước 1</div>
+                <div class="nav-item" data-slide="9">Bước 2</div>
+                <div class="nav-item" data-slide="10">Bước 3</div>
+                <div class="nav-item" data-slide="11">Bước 4</div>
+                <div class="nav-item" data-slide="12">Bước 5</div>
+                <div class="nav-item" data-slide="13">Bước 6</div>
+                <div class="nav-item" data-slide="14">Bước 7</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Python Installation</h3>
+                <div class="nav-item" data-slide="15">Bước 1</div>
+                <div class="nav-item" data-slide="16">Bước 2</div>
+                <div class="nav-item" data-slide="17">Bước 3</div>
+                <div class="nav-item" data-slide="18">Bước 4</div>
+                <div class="nav-item" data-slide="19">Bước 5</div>
+                <div class="nav-item" data-slide="20">Bước 6</div>
+                <div class="nav-item" data-slide="21">Bước 7</div>
+                <div class="nav-item" data-slide="22">Bước 8</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>VSCode Installation</h3>
+                <div class="nav-item" data-slide="23">Bước 1</div>
+                <div class="nav-item" data-slide="24">Bước 2</div>
+                <div class="nav-item" data-slide="25">Bước 3</div>
+                <div class="nav-item" data-slide="26">Bước 4</div>
+                <div class="nav-item" data-slide="27">Bước 5</div>
+                <div class="nav-item" data-slide="28">Bước 6</div>
+                <div class="nav-item" data-slide="29">Bước 7</div>
+                <div class="nav-item" data-slide="30">Bước 8</div>
+                <div class="nav-item" data-slide="31">Bước 9</div>
+                <div class="nav-item" data-slide="32">Bước 10</div>
+                <div class="nav-item" data-slide="33">Bước 11</div>
+                <div class="nav-item" data-slide="34">Bước 12</div>
+                <div class="nav-item" data-slide="35">Bước 13</div>
+                <div class="nav-item" data-slide="36">Bước 14</div>
+                <div class="nav-item" data-slide="37">Bước 15</div>
+                <div class="nav-item" data-slide="38">Bước 16</div>
+                <div class="nav-item" data-slide="39">Bước 17</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Tổng kết</h3>
+                <div class="nav-item" data-slide="40">Code đầu tiên</div>
+                <div class="nav-item" data-slide="41">Output & Bài tập</div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Slides -->
+            <div class="slides-container" id="slidesContainer">
+
+                <!-- Slide 0: Title -->
+                <div class="slide active" data-slide="0">
+                    <div class="slide-content">
+                        <h1>🚀 TUẦN 1</h1>
+                        <h2>KHỞI ĐỘNG + MÔI TRƯỜNG</h2>
+                        <p style="font-size: 24px; margin-top: 30px; color: #667eea;">
+                            "Từ ý tưởng đến code chạy được"
+                        </p>
+                        <p style="margin-top: 50px; font-size: 18px;">
+                            Chương trình Bổ túc Kỹ năng NCKH - Toán Tin
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 1: Brochure - Kỹ năng cốt lõi -->
+                <div class="slide" data-slide="1">
+                    <div class="slide-content">
+                        <h2>Chương trình 16 tuần với 6 nhóm kỹ năng cốt lõi</h2>
+                        <div class="image-container">
+                            <img src="brochure/brochure_vn.png" alt="6 nhóm kỹ năng">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Schedule 16 weeks -->
+                <div class="slide" data-slide="2">
+                    <div class="slide-content">
+                        <h2>Lịch học 16 tuần</h2>
+                        <div class="image-container">
+                            <img src="brochure/schedule_16weeks.png" alt="Lịch 16 tuần">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Tuần 1 Overview -->
+                <div class="slide" data-slide="3">
+                    <div class="slide-content">
+                        <h2>🎯 Chủ đề Tuần 1</h2>
+                        <table>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Nội dung</th>
+                            </tr>
+                            <tr>
+                                <td>15 phút</td>
+                                <td>Giới thiệu chương trình</td>
+                            </tr>
+                            <tr>
+                                <td>20 phút</td>
+                                <td>Demo project hoàn chỉnh</td>
+                            </tr>
+                            <tr>
+                                <td>20 phút</td>
+                                <td>So sánh MATLAB vs Python</td>
+                            </tr>
+                            <tr>
+                                <td>45 phút</td>
+                                <td>Giới thiệu môi trường làm việc</td>
+                            </tr>
+                            <tr>
+                                <td>30 phút</td>
+                                <td>Chạy code đầu tiên</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Demo 1 - Gradient Descent -->
+                <div class="slide" data-slide="4">
+                    <div class="slide-content">
+                        <h2>🎨 Demo 1: Tối ưu hóa - Gradient Descent</h2>
+                        <p>Thuật toán "lăn xuống đáy hũ" - Trực quan hóa đạo hàm</p>
+                        <div class="demo-container">
+                            <div class="iframe-wrapper">
+                                <div class="demo-preview" onclick="loadDemo(4)">
+                                    <div class="demo-preview-icon">▶️</div>
+                                    <div class="demo-preview-text">Click để xem Demo</div>
+                                </div>
+                                <div class="demo-loading">
+                                    <div class="spinner"></div>
+                                    <div style="color: white; font-size: 18px;">Đang tải demo...</div>
+                                </div>
+                                <iframe class="demo-iframe" data-src="https://phuocepu.github.io/nckh_d20/gradient-descent/"></iframe>
+                            </div>
+                            <div class="demo-error">
+                                ⚠️ Không thể tải demo trong iframe. Vui lòng dùng nút "Mở trong tab mới" bên dưới.
+                            </div>
+                        </div>
+                        <a href="https://phuocepu.github.io/nckh_d20/gradient-descent/" target="_blank" class="open-new-tab-btn">
+                            🔗 Mở trong tab mới
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Demo 2 - SVD -->
+                <div class="slide" data-slide="5">
+                    <div class="slide-content">
+                        <h2>🎨 Demo 2: Đại số tuyến tính - SVD Image Compression</h2>
+                        <p>Nén ảnh bằng ma trận - Từ 1MB xuống 100KB vẫn rõ nét!</p>
+                        <div class="demo-container">
+                            <div class="iframe-wrapper">
+                                <div class="demo-preview" onclick="loadDemo(5)">
+                                    <div class="demo-preview-icon">▶️</div>
+                                    <div class="demo-preview-text">Click để xem Demo</div>
+                                </div>
+                                <div class="demo-loading">
+                                    <div class="spinner"></div>
+                                    <div style="color: white; font-size: 18px;">Đang tải demo...</div>
+                                </div>
+                                <iframe class="demo-iframe" data-src="https://phuocepu.github.io/nckh_d20/svd-image-compression/"></iframe>
+                            </div>
+                            <div class="demo-error">
+                                ⚠️ Không thể tải demo trong iframe. Vui lòng dùng nút "Mở trong tab mới" bên dưới.
+                            </div>
+                        </div>
+                        <a href="https://phuocepu.github.io/nckh_d20/svd-image-compression/" target="_blank" class="open-new-tab-btn">
+                            🔗 Mở trong tab mới
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Demo 3 - Monty Hall -->
+                <div class="slide" data-slide="6">
+                    <div class="slide-content">
+                        <h2>🎨 Demo 3: Xác suất - Monty Hall Problem</h2>
+                        <p>Đổi cửa thắng 66.7% - Phản trực giác!</p>
+                        <div class="demo-container">
+                            <div class="iframe-wrapper">
+                                <div class="demo-preview" onclick="loadDemo(6)">
+                                    <div class="demo-preview-icon">▶️</div>
+                                    <div class="demo-preview-text">Click để xem Demo</div>
+                                </div>
+                                <div class="demo-loading">
+                                    <div class="spinner"></div>
+                                    <div style="color: white; font-size: 18px;">Đang tải demo...</div>
+                                </div>
+                                <iframe class="demo-iframe" data-src="https://phuocepu.github.io/nckh_d20/monty-hall-game/"></iframe>
+                            </div>
+                            <div class="demo-error">
+                                ⚠️ Không thể tải demo trong iframe. Vui lòng dùng nút "Mở trong tab mới" bên dưới.
+                            </div>
+                        </div>
+                        <a href="https://phuocepu.github.io/nckh_d20/monty-hall-game/" target="_blank" class="open-new-tab-btn">
+                            🔗 Mở trong tab mới
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 7: MATLAB vs Python -->
+                <div class="slide" data-slide="7">
+                    <div class="slide-content">
+                        <h2>🔍 MATLAB vs Python</h2>
+                        <table>
+                            <tr>
+                                <th>Tiêu chí</th>
+                                <th>MATLAB</th>
+                                <th>Python</th>
+                            </tr>
+                            <tr>
+                                <td>💰 Giá</td>
+                                <td>Trả phí (đắt)</td>
+                                <td>Miễn phí</td>
+                            </tr>
+                            <tr>
+                                <td>👥 Cộng đồng</td>
+                                <td>Học thuật</td>
+                                <td>Rộng lớn (AI, Web, Data...)</td>
+                            </tr>
+                            <tr>
+                                <td>⚙️ Cú pháp</td>
+                                <td>Gần Toán hơn</td>
+                                <td>Đa dụng hơn</td>
+                            </tr>
+                            <tr>
+                                <td>🤖 Thư viện ML/AI</td>
+                                <td>Có nhưng hạn chế</td>
+                                <td>Rất mạnh (TensorFlow, PyTorch)</td>
+                            </tr>
+                        </table>
+                        <p style="margin-top: 30px; font-size: 18px; color: #667eea;">
+                            💡 "Khóa này focus Python, nhưng kỹ năng tư duy chuyển sang MATLAB dễ dàng"
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Colaboratory Slides (8-14) -->
+                <div class="slide" data-slide="8">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 1</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/1.png" alt="Colab step 1">
+                            <p class="caption">Bước 1: Truy cập Google Drive (drive.google.com)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="9">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 2</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/2.png" alt="Colab step 2">
+                            <p class="caption">Bước 2: Click nút 'New' và chọn 'Connect more apps'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="10">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 3</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/3.png" alt="Colab step 3">
+                            <p class="caption">Bước 3: Tìm kiếm 'Colaboratory' trong Marketplace</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="11">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 4</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/4.png" alt="Colab step 4">
+                            <p class="caption">Bước 4: Tìm thấy Google Colaboratory, click để cài đặt</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="12">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 5</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/5.png" alt="Colab step 5">
+                            <p class="caption">Bước 5: Google Colaboratory đã được kết nối</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="13">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 6</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/6.png" alt="Colab step 6">
+                            <p class="caption">Bước 6: Tạo notebook mới: New → More → Google Colaboratory</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="14">
+                    <div class="slide-content">
+                        <h2>☁️ Google Colaboratory - Bước 7</h2>
+                        <div class="image-container">
+                            <img src="collaboratory/7.png" alt="Colab step 7">
+                            <p class="caption">Bước 7: Viết code và chạy trong Colab notebook (miễn phí!)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Python Installation Slides (15-22) -->
+                <div class="slide" data-slide="15">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 1</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_1.png" alt="Python step 1">
+                            <p class="caption">Bước 1: Truy cập python.org và click 'Download'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="16">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 2</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_2.png" alt="Python step 2">
+                            <p class="caption">Bước 2: Chọn phiên bản mới nhất cho Windows</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="17">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 3</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_3.png" alt="Python step 3">
+                            <p class="caption">Bước 3: Danh sách các phiên bản Python</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="18">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 4</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_4.png" alt="Python step 4">
+                            <p class="caption">Bước 4: Tìm file installer trong thư mục Downloads</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="19">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 5</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_5.png" alt="Python step 5">
+                            <p class="caption">Bước 5: Click phải và chọn 'Open' (hoặc 'Run as administrator')</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="20">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 6</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_6.png" alt="Python step 6">
+                            <p class="caption">⚠️ Bước 6: QUAN TRỌNG: Check 'Add Python 3.14 to PATH', sau đó click 'Install Now'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="21">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 7</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_7.png" alt="Python step 7">
+                            <p class="caption">Bước 7: Mở Command Prompt (gõ 'cmd' trong Windows Search)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="22">
+                    <div class="slide-content">
+                        <h2>🐍 Cài đặt Python - Bước 8</h2>
+                        <div class="image-container">
+                            <img src="python_installation/python_8.png" alt="Python step 8">
+                            <p class="caption">Bước 8: Kiểm tra cài đặt: gõ 'python --version' và 'pip --version'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VSCode Installation Slides (23-39) -->
+                <div class="slide" data-slide="23">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 1</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_1.png" alt="VSCode step 1">
+                            <p class="caption">Bước 1: Truy cập code.visualstudio.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="24">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 2</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_2.png" alt="VSCode step 2">
+                            <p class="caption">Bước 2: Click 'Download for Windows' và đợi tải xong</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="25">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 3</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_3.png" alt="VSCode step 3">
+                            <p class="caption">Bước 3: Tìm file VSCode installer trong Downloads</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="26">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 4</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_4.png" alt="VSCode step 4">
+                            <p class="caption">Bước 4: Đồng ý License Agreement</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="27">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 5</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_5.png" alt="VSCode step 5">
+                            <p class="caption">⚠️ Bước 5: Check TẤT CẢ các options (đặc biệt 'Add to PATH')</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="28">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 6</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_6.png" alt="VSCode step 6">
+                            <p class="caption">Bước 6: Click 'Finish' và check 'Launch Visual Studio Code'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="29">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 7</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_7.png" alt="VSCode step 7">
+                            <p class="caption">Bước 7: VSCode đã mở - giao diện welcome</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="30">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 8</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_8.png" alt="VSCode step 8">
+                            <p class="caption">Bước 8: Click biểu tượng Extensions (Ctrl+Shift+X)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="31">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 9</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_9.png" alt="VSCode step 9">
+                            <p class="caption">Bước 9: Tìm và cài 'Python' extension by Microsoft</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="32">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 10</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_10.png" alt="VSCode step 10">
+                            <p class="caption">Bước 10: Cài thêm Pylance, Python Debugger, Jupyter (recommended)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="33">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 11</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_11.png" alt="VSCode step 11">
+                            <p class="caption">Bước 11: Extensions đã được cài đặt</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="34">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 12</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_12.png" alt="VSCode step 12">
+                            <p class="caption">Bước 12: Chọn Python interpreter (Ctrl+Shift+P → Python: Select Interpreter)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="35">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 13</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_13.png" alt="VSCode step 13">
+                            <p class="caption">Bước 13: Tạo file mới (Ctrl+N) - chọn 'Python File'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="36">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 14</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_14.png" alt="VSCode step 14">
+                            <p class="caption">Bước 14: Viết code Python và chạy (click nút ▶ hoặc Ctrl+F5)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="37">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 15</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_15.png" alt="VSCode step 15">
+                            <p class="caption">Bước 15: Hoặc tạo Jupyter Notebook (.ipynb)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="38">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 16</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_16.png" alt="VSCode step 16">
+                            <p class="caption">Bước 16: Notebook sẽ tự động cài ipykernel lần đầu</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="39">
+                    <div class="slide-content">
+                        <h2>💻 Cài đặt VSCode - Bước 17</h2>
+                        <div class="image-container">
+                            <img src="vscode_installation/vscode_17.png" alt="VSCode step 17">
+                            <p class="caption">Bước 17: Viết code trong cell và chạy (Shift+Enter)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 40: Code đầu tiên -->
+                <div class="slide" data-slide="40">
+                    <div class="slide-content">
+                        <h2>👨‍💻 Chạy Code Đầu Tiên</h2>
+                        <p>Chạy cùng 1 đoạn code trên cả 3 môi trường:</p>
+                        <div class="code-block"><span class="comment"># Hello World cho Toán-Tin</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="function">print</span>(<span class="string">"Hello NCKH!"</span>)
+<span class="function">print</span>(<span class="string">f"Số pi = {np.pi}"</span>)
+<span class="function">print</span>(<span class="string">f"Căn 2 = {np.sqrt(2)}"</span>)</div>
+                    </div>
+                </div>
+
+                <!-- Slide 41: Tổng kết -->
+                <div class="slide" data-slide="41">
+                    <div class="slide-content">
+                        <h2>✅ Output buổi học & Bài tập về nhà</h2>
+
+                        <div style="display: flex; gap: 40px; justify-content: center; margin-top: 30px;">
+                            <div style="flex: 1; max-width: 500px;">
+                                <h3>Output buổi học:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Hiểu mục tiêu khóa học 16 tuần</div>
+                                    <div class="checklist-item">Thấy được demo project hoàn chỉnh</div>
+                                    <div class="checklist-item">Máy đã cài Python + Jupyter</div>
+                                    <div class="checklist-item">Chạy được code đầu tiên</div>
+                                </div>
+                            </div>
+
+                            <div style="flex: 1; max-width: 500px;">
+                                <h3>Bài tập về nhà:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Tạo notebook trên Colab hoặc Jupyter</div>
+                                    <div class="checklist-item">Viết 5-10 dòng code Python</div>
+                                    <div class="checklist-item">Thử chạy trên môi trường khác</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 50px; font-size: 24px; color: #667eea;">
+                            🎉 Chúc các bạn học tốt!
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="nav-controls">
+                <button class="nav-btn" id="prevBtn" onclick="prevSlide()">←</button>
+                <button class="nav-btn" id="nextBtn" onclick="nextSlide()">→</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Toggle for Mobile -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+        ☰
+    </button>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 42;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSlide(0);
+            updateNavigation();
+            updateProgress();
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            });
+
+            // Sidebar navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const slideNum = parseInt(this.dataset.slide);
+                    goToSlide(slideNum);
+                });
+            });
+        });
+
+        function updateSlide(newSlideIndex) {
+            const slides = document.querySelectorAll('.slide');
+
+            // Remove active class from all slides
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index < newSlideIndex) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            // Add active class to current slide
+            slides[newSlideIndex].classList.add('active');
+
+            currentSlide = newSlideIndex;
+            updateNavigation();
+            updateProgress();
+            updateSidebarActive();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                updateSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                updateSlide(currentSlide - 1);
+            }
+        }
+
+        function goToSlide(slideIndex) {
+            if (slideIndex >= 0 && slideIndex < totalSlides) {
+                updateSlide(slideIndex);
+            }
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateSidebarActive() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.slide) === currentSlide) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Lazy load demo iframes
+        function loadDemo(slideIndex) {
+            console.log('loadDemo called with slideIndex:', slideIndex);
+
+            // Query specifically within slides container, not sidebar nav
+            const slide = document.querySelector(`#slidesContainer .slide[data-slide="${slideIndex}"]`);
+            console.log('Slide found:', slide);
+
+            if (!slide) {
+                console.error('Slide not found:', slideIndex);
+                return;
+            }
+
+            console.log('Slide HTML:', slide.innerHTML.substring(0, 200));
+
+            const preview = slide.querySelector('.demo-preview');
+            const loading = slide.querySelector('.demo-loading');
+            const errorDiv = slide.querySelector('.demo-error');
+            const iframe = slide.querySelector('iframe');
+
+            console.log('Preview:', preview);
+            console.log('Loading:', loading);
+            console.log('ErrorDiv:', errorDiv);
+            console.log('Iframe:', iframe);
+
+            if (!iframe) {
+                console.error('Iframe not found in slide:', slideIndex);
+                return;
+            }
+
+            const demoUrl = iframe.getAttribute('data-src');
+
+            if (!demoUrl) {
+                console.error('Demo URL not found:', slideIndex);
+                return;
+            }
+
+            console.log('Loading demo:', demoUrl);
+
+            // Hide preview and show loading
+            if (preview) preview.classList.add('hidden');
+            if (loading) loading.classList.add('show');
+
+            // Set iframe src to start loading
+            iframe.src = demoUrl;
+
+            // Handle iframe load
+            iframe.onload = function() {
+                console.log('Demo loaded successfully');
+                if (loading) loading.classList.remove('show');
+            };
+
+            // Handle iframe error
+            iframe.onerror = function() {
+                console.error('Failed to load demo');
+                if (loading) loading.classList.remove('show');
+                if (errorDiv) errorDiv.classList.add('show');
+            };
+
+            // Timeout fallback (if iframe takes too long)
+            setTimeout(function() {
+                if (loading && loading.classList.contains('show')) {
+                    console.log('Demo loaded (timeout reached)');
+                    loading.classList.remove('show');
+                }
+            }, 5000); // 5 seconds timeout
+        }
+    </script>
+</body>
+</html>
