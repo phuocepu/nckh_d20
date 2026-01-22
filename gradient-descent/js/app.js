@@ -8,8 +8,8 @@ const state = {
     functionType: 'parabola',
     ballCount: 1,
     balls: [
-        { x0: 2.5, alpha: 0.1, x: 2.5, trail: [] },
-        { x0: -2.5, alpha: 0.3, x: -2.5, trail: [] }
+        { x0: 8, alpha: 0.05, x: 8, trail: [] },
+        { x0: -8, alpha: 0.1, x: -8, trail: [] }
     ],
     maxIter: 100,
     playSpeed: 150,
@@ -34,32 +34,32 @@ const COLORS = {
 
 const BALL_RADIUS = 12;
 const TRAIL_RADIUS = 5;
-const X_MIN = -4;
-const X_MAX = 4;
+const X_MIN = -10;
+const X_MAX = 10;
 
 // ===== DOM ELEMENTS =====
 let canvas, ctx;
 let elements = {};
 
-// ===== FUNCTIONS (with larger Y range) =====
+// ===== FUNCTIONS (with larger Y range for x: -10 to 10) =====
 const functions = {
     parabola: {
         f: (x) => x * x,
         df: (x) => 2 * x,
-        yMin: -2,
-        yMax: 20
+        yMin: -5,
+        yMax: 110
     },
     doublewell: {
         f: (x) => x * x * x * x - 2 * x * x + 1,
         df: (x) => 4 * x * x * x - 4 * x,
-        yMin: -2,
-        yMax: 15
+        yMin: -5,
+        yMax: 50
     },
     wavy: {
         f: (x) => x * x / 4 + Math.sin(2.5 * x) + 2,
         df: (x) => x / 2 + 2.5 * Math.cos(2.5 * x),
         yMin: -2,
-        yMax: 10
+        yMax: 30
     }
 };
 
@@ -94,8 +94,8 @@ function drawGrid() {
     ctx.strokeStyle = COLORS.grid;
     ctx.lineWidth = 1;
 
-    // Vertical lines
-    for (let x = X_MIN; x <= X_MAX; x++) {
+    // Vertical lines (every 2 units)
+    for (let x = X_MIN; x <= X_MAX; x += 2) {
         const cx = xToCanvas(x);
         ctx.beginPath();
         ctx.moveTo(cx, 0);
@@ -138,11 +138,11 @@ function drawAxes() {
     ctx.lineTo(x0, yToCanvas(func.yMax));
     ctx.stroke();
 
-    // X axis labels
+    // X axis labels (every 2 units for larger range)
     ctx.fillStyle = COLORS.text;
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    for (let x = X_MIN; x <= X_MAX; x++) {
+    for (let x = X_MIN; x <= X_MAX; x += 2) {
         ctx.fillText(x.toString(), xToCanvas(x), xAxisY + 20);
     }
 
@@ -290,7 +290,7 @@ function gradientDescentStep() {
         const newX = ball.x - ball.alpha * gradient;
 
         // Clamp to bounds (allow ping-pong effect but stay in view)
-        ball.x = Math.max(X_MIN + 0.3, Math.min(X_MAX - 0.3, newX));
+        ball.x = Math.max(X_MIN + 0.5, Math.min(X_MAX - 0.5, newX));
 
         // Check if moved significantly
         if (Math.abs(gradient) > 0.001) {
