@@ -76,8 +76,17 @@ function init() {
     };
 
     // Initialize Web Worker
-    svdWorker = new Worker('js/svd-worker.js');
-    svdWorker.onmessage = handleWorkerMessage;
+    try {
+        svdWorker = new Worker('js/svd-worker.js');
+        svdWorker.onmessage = handleWorkerMessage;
+        svdWorker.onerror = (error) => {
+            console.error('Worker error:', error);
+            alert('Lỗi Web Worker: ' + error.message);
+        };
+    } catch (error) {
+        console.error('Failed to create worker:', error);
+        alert('Không thể khởi tạo Web Worker: ' + error.message);
+    }
 
     setupEventListeners();
 }
@@ -148,41 +157,46 @@ let pendingChannels = 0;
 let computeStartTime = 0;
 
 function handleWorkerMessage(e) {
-    const { type, result, channel, progress } = e.data;
+    try {
+        const { type, result, channel, progress } = e.data;
 
-    if (type === 'progress') {
-        const baseProgress = channel === 'gray' ? 0 :
-                            channel === 'R' ? 0 :
-                            channel === 'G' ? 33 : 66;
-        const channelWeight = state.colorMode === 'grayscale' ? 100 : 33;
-        const totalProgress = baseProgress + (progress * channelWeight / 100);
-        elements.procProgress.style.width = totalProgress + '%';
-    }
-
-    if (type === 'computed') {
-        if (channel === 'gray') {
-            state.svdData = result;
-        } else if (channel === 'R') {
-            state.svdDataR = result;
-            elements.processingHint.textContent = 'Tính SVD cho kênh G...';
-        } else if (channel === 'G') {
-            state.svdDataG = result;
-            elements.processingHint.textContent = 'Tính SVD cho kênh B...';
-        } else if (channel === 'B') {
-            state.svdDataB = result;
+        if (type === 'progress') {
+            const baseProgress = channel === 'gray' ? 0 :
+                                channel === 'R' ? 0 :
+                                channel === 'G' ? 33 : 66;
+            const channelWeight = state.colorMode === 'grayscale' ? 100 : 33;
+            const totalProgress = baseProgress + (progress * channelWeight / 100);
+            elements.procProgress.style.width = totalProgress + '%';
         }
 
-        pendingChannels--;
+        if (type === 'computed') {
+            if (channel === 'gray') {
+                state.svdData = result;
+            } else if (channel === 'R') {
+                state.svdDataR = result;
+                elements.processingHint.textContent = 'Tính SVD cho kênh G...';
+            } else if (channel === 'G') {
+                state.svdDataG = result;
+                elements.processingHint.textContent = 'Tính SVD cho kênh B...';
+            } else if (channel === 'B') {
+                state.svdDataB = result;
+            }
 
-        if (pendingChannels === 0) {
-            state.totalTime = (performance.now() - computeStartTime) / 1000;
-            elements.procProgress.style.width = '100%';
-            elements.processingTitle.textContent = 'Hoàn tất!';
+            pendingChannels--;
 
-            setTimeout(() => {
-                showResultScreen();
-            }, 300);
+            if (pendingChannels === 0) {
+                state.totalTime = (performance.now() - computeStartTime) / 1000;
+                elements.procProgress.style.width = '100%';
+                elements.processingTitle.textContent = 'Hoàn tất!';
+
+                setTimeout(() => {
+                    showResultScreen();
+                }, 300);
+            }
         }
+    } catch (error) {
+        console.error('Error in handleWorkerMessage:', error);
+        alert('Lỗi xử lý: ' + error.message);
     }
 }
 
@@ -427,29 +441,34 @@ function imageDataToRGBMatrices(imageData) {
 
 // ===== RESULT SCREEN =====
 function showResultScreen() {
-    const size = state.colorMode === 'grayscale' ?
-                 state.svdData.rows : state.svdDataR.rows;
+    try {
+        const size = state.colorMode === 'grayscale' ?
+                     state.svdData.rows : state.svdDataR.rows;
 
-    elements.canvasOriginal.width = size;
-    elements.canvasOriginal.height = size;
-    elements.canvasCompressed.width = size;
-    elements.canvasCompressed.height = size;
+        elements.canvasOriginal.width = size;
+        elements.canvasOriginal.height = size;
+        elements.canvasCompressed.width = size;
+        elements.canvasCompressed.height = size;
 
-    drawOriginalImage(size);
+        drawOriginalImage(size);
 
-    elements.kSlider.max = state.maxK;
-    elements.kMax.textContent = state.maxK;
-    state.currentK = Math.min(50, state.maxK);
-    elements.kSlider.value = state.currentK;
-    elements.kValue.textContent = state.currentK;
+        elements.kSlider.max = state.maxK;
+        elements.kMax.textContent = state.maxK;
+        state.currentK = Math.min(50, state.maxK);
+        elements.kSlider.value = state.currentK;
+        elements.kValue.textContent = state.currentK;
 
-    elements.statsOriginalSize.textContent = `${size} × ${size}`;
-    elements.svdTime.textContent = state.totalTime.toFixed(2) + 's';
+        elements.statsOriginalSize.textContent = `${size} × ${size}`;
+        elements.svdTime.textContent = state.totalTime.toFixed(2) + 's';
 
-    updateCompressedImage();
-    updatePresetButtons();
+        updateCompressedImage();
+        updatePresetButtons();
 
-    showScreen('screen-result');
+        showScreen('screen-result');
+    } catch (error) {
+        console.error('Error in showResultScreen:', error);
+        alert('Có lỗi xảy ra: ' + error.message);
+    }
 }
 
 function drawOriginalImage(size) {
@@ -618,50 +637,55 @@ function updateStats(k, size) {
 
 // Calculate PSNR between original and reconstructed image
 function calculatePSNR(k, size) {
-    let mse = 0;
-    const n = size * size;
+    try {
+        let mse = 0;
+        const n = size * size;
 
-    if (state.colorMode === 'grayscale') {
-        const { U, S, V } = state.svdData;
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                let reconstructed = 0;
-                for (let i = 0; i < k && S[i] > 1e-10; i++) {
-                    reconstructed += S[i] * U[row][i] * V[col][i];
-                }
-                const original = state.imageMatrix[row][col];
-                const diff = original - reconstructed;
-                mse += diff * diff;
-            }
-        }
-    } else {
-        // For color, average MSE across R, G, B
-        const channels = [
-            { svd: state.svdDataR, matrix: state.imageMatrixR },
-            { svd: state.svdDataG, matrix: state.imageMatrixG },
-            { svd: state.svdDataB, matrix: state.imageMatrixB }
-        ];
-        for (const { svd, matrix } of channels) {
-            const { U, S, V } = svd;
+        if (state.colorMode === 'grayscale') {
+            const { U, S, V } = state.svdData;
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     let reconstructed = 0;
                     for (let i = 0; i < k && S[i] > 1e-10; i++) {
                         reconstructed += S[i] * U[row][i] * V[col][i];
                     }
-                    const original = matrix[row][col];
+                    const original = state.imageMatrix[row][col];
                     const diff = original - reconstructed;
                     mse += diff * diff;
                 }
             }
+        } else {
+            // For color, average MSE across R, G, B
+            const channels = [
+                { svd: state.svdDataR, matrix: state.imageMatrixR },
+                { svd: state.svdDataG, matrix: state.imageMatrixG },
+                { svd: state.svdDataB, matrix: state.imageMatrixB }
+            ];
+            for (const { svd, matrix } of channels) {
+                const { U, S, V } = svd;
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        let reconstructed = 0;
+                        for (let i = 0; i < k && S[i] > 1e-10; i++) {
+                            reconstructed += S[i] * U[row][i] * V[col][i];
+                        }
+                        const original = matrix[row][col];
+                        const diff = original - reconstructed;
+                        mse += diff * diff;
+                    }
+                }
+            }
+            mse /= 3; // Average across 3 channels
         }
-        mse /= 3; // Average across 3 channels
+
+        mse /= n;
+
+        if (mse === 0) return Infinity;
+        return 10 * Math.log10((255 * 255) / mse);
+    } catch (error) {
+        console.error('Error calculating PSNR:', error);
+        return 0; // Return 0 on error
     }
-
-    mse /= n;
-
-    if (mse === 0) return Infinity;
-    return 10 * Math.log10((255 * 255) / mse);
 }
 
 function updatePresetButtons() {
