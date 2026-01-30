@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 2: Python Cơ Bản - NCKH Toán Tin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .nav-section h3 {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: #555;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #f0f4ff;
+            border-left-color: #667eea;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            background: white;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1;
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        /* Slide Content */
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-size: 24px;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #555;
+            margin: 15px 0;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 30px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #c586c0;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .function {
+            color: #dcdcaa;
+        }
+
+        .code-block .number {
+            color: #b5cea8;
+        }
+
+        .code-block .operator {
+            color: #d4d4d4;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            max-width: 900px;
+            margin: 30px auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 800px;
+            text-align: left;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #f5923620 0%, #ff6b6b20 100%);
+            border-left-color: #f59236;
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, #00b89420 0%, #00d4aa20 100%);
+            border-left-color: #00b894;
+        }
+
+        /* List */
+        ul {
+            text-align: left;
+            max-width: 800px;
+            margin: 20px auto;
+            padding-left: 30px;
+        }
+
+        li {
+            font-size: 18px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 1500;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+
+            .progress-bar {
+                left: 0;
+            }
+
+            .slide {
+                padding: 80px 20px 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            .code-block {
+                font-size: 14px;
+                padding: 20px;
+            }
+
+            .nav-controls {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+
+        /* Checklist */
+        .checklist {
+            text-align: left;
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .checklist-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .checklist-item::before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Highlight */
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .badge.int { background: #3498db; color: white; }
+        .badge.float { background: #9b59b6; color: white; }
+        .badge.str { background: #e74c3c; color: white; }
+        .badge.bool { background: #2ecc71; color: white; }
+        .badge.list { background: #f39c12; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <h2>📚 Tuần 2: Python Cơ Bản</h2>
+
+            <div class="nav-section">
+                <h3>Giới thiệu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Nội dung buổi học</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>1. Biến</h3>
+                <div class="nav-item" data-slide="2">Biến là gì?</div>
+                <div class="nav-item" data-slide="3">Cách đặt tên biến</div>
+                <div class="nav-item" data-slide="4">Ví dụ biến</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>2. Kiểu dữ liệu</h3>
+                <div class="nav-item" data-slide="5">Tổng quan</div>
+                <div class="nav-item" data-slide="6">int & float</div>
+                <div class="nav-item" data-slide="7">string</div>
+                <div class="nav-item" data-slide="8">bool & list</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>3. Phép số học</h3>
+                <div class="nav-item" data-slide="9">Các phép tính</div>
+                <div class="nav-item" data-slide="10">Ví dụ</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>4. Phép so sánh</h3>
+                <div class="nav-item" data-slide="11">Các phép so sánh</div>
+                <div class="nav-item" data-slide="12">Ví dụ</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>5. Phép logic</h3>
+                <div class="nav-item" data-slide="13">and, or, not</div>
+                <div class="nav-item" data-slide="14">Bảng chân trị</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>6. Rẽ nhánh</h3>
+                <div class="nav-item" data-slide="15">if</div>
+                <div class="nav-item" data-slide="16">if-else</div>
+                <div class="nav-item" data-slide="17">if-elif-else</div>
+                <div class="nav-item" data-slide="18">Ví dụ phân loại</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>7. Vòng lặp</h3>
+                <div class="nav-item" data-slide="19">for loop</div>
+                <div class="nav-item" data-slide="20">while loop</div>
+                <div class="nav-item" data-slide="21">range()</div>
+                <div class="nav-item" data-slide="22">break & continue</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>8. Input/Output</h3>
+                <div class="nav-item" data-slide="23">input()</div>
+                <div class="nav-item" data-slide="24">print() & f-string</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Tổng kết</h3>
+                <div class="nav-item" data-slide="25">Output & Bài tập</div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Slides -->
+            <div class="slides-container" id="slidesContainer">
+
+                <!-- Slide 0: Title -->
+                <div class="slide active" data-slide="0">
+                    <div class="slide-content">
+                        <h1>🐍 TUẦN 2</h1>
+                        <h2>PYTHON CƠ BẢN</h2>
+                        <p style="font-size: 24px; margin-top: 30px; color: #667eea;">
+                            "Máy tính lưu trữ và xử lý dữ liệu như thế nào?"
+                        </p>
+                        <p style="margin-top: 50px; font-size: 18px;">
+                            Chương trình Bổ túc Kỹ năng NCKH - Toán Tin
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 1: Nội dung buổi học -->
+                <div class="slide" data-slide="1">
+                    <div class="slide-content">
+                        <h2>📋 Nội dung buổi học</h2>
+                        <table>
+                            <tr>
+                                <th>STT</th>
+                                <th>Chủ đề</th>
+                            </tr>
+                            <tr><td>1</td><td>Biến (Variables)</td></tr>
+                            <tr><td>2</td><td>Kiểu dữ liệu (Data Types)</td></tr>
+                            <tr><td>3</td><td>Phép số học (Arithmetic Operators)</td></tr>
+                            <tr><td>4</td><td>Phép so sánh (Comparison Operators)</td></tr>
+                            <tr><td>5</td><td>Phép logic (Logical Operators)</td></tr>
+                            <tr><td>6</td><td>Cấu trúc rẽ nhánh (if-else)</td></tr>
+                            <tr><td>7</td><td>Vòng lặp (for, while)</td></tr>
+                            <tr><td>8</td><td>Input/Output</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Biến là gì? -->
+                <div class="slide" data-slide="2">
+                    <div class="slide-content">
+                        <h2>📦 1. Biến (Variables)</h2>
+                        <h3>Biến là gì?</h3>
+                        <div class="info-box">
+                            <p><strong>Biến</strong> = "Hộp" để lưu trữ dữ liệu trong bộ nhớ</p>
+                        </div>
+                        <p>Giống như bạn có một chiếc hộp, bạn:</p>
+                        <ul>
+                            <li>🏷️ <strong>Đặt tên</strong> cho hộp (tên biến)</li>
+                            <li>📦 <strong>Bỏ đồ</strong> vào hộp (giá trị)</li>
+                            <li>🔄 <strong>Thay đổi</strong> đồ trong hộp bất cứ lúc nào</li>
+                        </ul>
+                        <div class="code-block"><span class="comment"># Cú pháp: ten_bien = gia_tri</span>
+ten = <span class="string">"Nguyễn Văn A"</span>
+tuoi = <span class="number">20</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Cách đặt tên biến -->
+                <div class="slide" data-slide="3">
+                    <div class="slide-content">
+                        <h2>📝 Quy tắc đặt tên biến</h2>
+                        <div class="info-box success">
+                            <p><strong>✅ Được phép:</strong></p>
+                            <ul>
+                                <li>Chữ cái (a-z, A-Z), số (0-9), gạch dưới (_)</li>
+                                <li>Bắt đầu bằng chữ cái hoặc gạch dưới</li>
+                                <li>Phân biệt HOA/thường (name ≠ Name)</li>
+                            </ul>
+                        </div>
+                        <div class="info-box warning">
+                            <p><strong>❌ Không được phép:</strong></p>
+                            <ul>
+                                <li>Bắt đầu bằng số: <code>1name</code></li>
+                                <li>Có khoảng trắng: <code>my name</code></li>
+                                <li>Từ khóa Python: <code>if, for, while, class...</code></li>
+                            </ul>
+                        </div>
+                        <div class="code-block"><span class="comment"># Tốt</span>
+ho_ten = <span class="string">"An"</span>
+soLuong = <span class="number">10</span>
+_private = <span class="number">5</span>
+
+<span class="comment"># Xấu (sẽ lỗi!)</span>
+<span class="comment"># 1name = "An"  # Lỗi: bắt đầu bằng số</span>
+<span class="comment"># my name = "An"  # Lỗi: có khoảng trắng</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Ví dụ biến -->
+                <div class="slide" data-slide="4">
+                    <div class="slide-content">
+                        <h2>💡 Ví dụ sử dụng biến</h2>
+                        <div class="code-block"><span class="comment"># Khai báo biến</span>
+ten = <span class="string">"Nguyễn Văn A"</span>
+tuoi = <span class="number">20</span>
+diem_toan = <span class="number">8.5</span>
+la_sinh_vien = <span class="keyword">True</span>
+
+<span class="comment"># In ra màn hình</span>
+<span class="function">print</span>(ten)           <span class="comment"># Nguyễn Văn A</span>
+<span class="function">print</span>(tuoi)          <span class="comment"># 20</span>
+<span class="function">print</span>(diem_toan)     <span class="comment"># 8.5</span>
+
+<span class="comment"># Thay đổi giá trị</span>
+tuoi = <span class="number">21</span>            <span class="comment"># Giờ tuổi = 21</span>
+<span class="function">print</span>(tuoi)          <span class="comment"># 21</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Kiểu dữ liệu tổng quan -->
+                <div class="slide" data-slide="5">
+                    <div class="slide-content">
+                        <h2>🎨 2. Kiểu dữ liệu (Data Types)</h2>
+                        <p>Python có nhiều kiểu dữ liệu, 5 kiểu cơ bản nhất:</p>
+                        <div style="margin: 30px 0;">
+                            <span class="badge int">int - Số nguyên</span>
+                            <span class="badge float">float - Số thực</span>
+                            <span class="badge str">str - Chuỗi ký tự</span>
+                            <span class="badge bool">bool - Đúng/Sai</span>
+                            <span class="badge list">list - Danh sách</span>
+                        </div>
+                        <div class="code-block"><span class="comment"># Kiểm tra kiểu dữ liệu bằng type()</span>
+<span class="function">print</span>(<span class="function">type</span>(<span class="number">10</span>))        <span class="comment"># &lt;class 'int'&gt;</span>
+<span class="function">print</span>(<span class="function">type</span>(<span class="number">3.14</span>))      <span class="comment"># &lt;class 'float'&gt;</span>
+<span class="function">print</span>(<span class="function">type</span>(<span class="string">"Hello"</span>))   <span class="comment"># &lt;class 'str'&gt;</span>
+<span class="function">print</span>(<span class="function">type</span>(<span class="keyword">True</span>))      <span class="comment"># &lt;class 'bool'&gt;</span>
+<span class="function">print</span>(<span class="function">type</span>([<span class="number">1,2,3</span>]))   <span class="comment"># &lt;class 'list'&gt;</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: int & float -->
+                <div class="slide" data-slide="6">
+                    <div class="slide-content">
+                        <h2>🔢 int & float</h2>
+                        <table>
+                            <tr>
+                                <th>Kiểu</th>
+                                <th>Mô tả</th>
+                                <th>Ví dụ</th>
+                            </tr>
+                            <tr>
+                                <td><span class="badge int">int</span></td>
+                                <td>Số nguyên (không có phần thập phân)</td>
+                                <td>10, -5, 0, 1000</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge float">float</span></td>
+                                <td>Số thực (có phần thập phân)</td>
+                                <td>3.14, -2.5, 0.0</td>
+                            </tr>
+                        </table>
+                        <div class="code-block"><span class="comment"># Số nguyên</span>
+so_nguyen = <span class="number">42</span>
+so_am = <span class="number">-10</span>
+
+<span class="comment"># Số thực</span>
+pi = <span class="number">3.14159</span>
+nhiet_do = <span class="number">-5.5</span>
+
+<span class="comment"># Chuyển đổi kiểu</span>
+<span class="function">int</span>(<span class="number">3.7</span>)    <span class="comment"># = 3 (bỏ phần thập phân)</span>
+<span class="function">float</span>(<span class="number">5</span>)    <span class="comment"># = 5.0</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: string -->
+                <div class="slide" data-slide="7">
+                    <div class="slide-content">
+                        <h2>📝 string (str) - Chuỗi ký tự</h2>
+                        <div class="info-box">
+                            <p>Chuỗi = dãy các ký tự, đặt trong dấu <code>" "</code> hoặc <code>' '</code></p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Khai báo chuỗi</span>
+ten = <span class="string">"Nguyễn Văn A"</span>
+lop = <span class="string">'D20 Toán Tin'</span>
+
+<span class="comment"># Nối chuỗi</span>
+ho_ten = <span class="string">"Nguyễn"</span> + <span class="string">" "</span> + <span class="string">"Văn A"</span>
+<span class="function">print</span>(ho_ten)  <span class="comment"># Nguyễn Văn A</span>
+
+<span class="comment"># Độ dài chuỗi</span>
+<span class="function">print</span>(<span class="function">len</span>(<span class="string">"Hello"</span>))  <span class="comment"># 5</span>
+
+<span class="comment"># Truy cập ký tự (bắt đầu từ 0)</span>
+chu = <span class="string">"Python"</span>
+<span class="function">print</span>(chu[<span class="number">0</span>])   <span class="comment"># P</span>
+<span class="function">print</span>(chu[<span class="number">-1</span>])  <span class="comment"># n (ký tự cuối)</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: bool & list -->
+                <div class="slide" data-slide="8">
+                    <div class="slide-content">
+                        <h2>✅ bool & 📋 list</h2>
+                        <div class="code-block"><span class="comment"># === BOOL (Đúng/Sai) ===</span>
+dung = <span class="keyword">True</span>
+sai = <span class="keyword">False</span>
+
+la_sinh_vien = <span class="keyword">True</span>
+da_tot_nghiep = <span class="keyword">False</span>
+
+<span class="comment"># Kết quả so sánh là bool</span>
+<span class="function">print</span>(<span class="number">5</span> > <span class="number">3</span>)   <span class="comment"># True</span>
+<span class="function">print</span>(<span class="number">2</span> == <span class="number">3</span>)  <span class="comment"># False</span></div>
+                        <div class="code-block"><span class="comment"># === LIST (Danh sách) ===</span>
+diem = [<span class="number">8.5</span>, <span class="number">9.0</span>, <span class="number">7.5</span>, <span class="number">8.0</span>]
+ten_sv = [<span class="string">"An"</span>, <span class="string">"Bình"</span>, <span class="string">"Cường"</span>]
+
+<span class="comment"># Truy cập phần tử</span>
+<span class="function">print</span>(diem[<span class="number">0</span>])     <span class="comment"># 8.5</span>
+<span class="function">print</span>(ten_sv[<span class="number">1</span>])   <span class="comment"># Bình</span>
+
+<span class="comment"># Thêm phần tử</span>
+diem.append(<span class="number">9.5</span>)
+<span class="function">print</span>(diem)  <span class="comment"># [8.5, 9.0, 7.5, 8.0, 9.5]</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Phép số học -->
+                <div class="slide" data-slide="9">
+                    <div class="slide-content">
+                        <h2>➕ 3. Phép số học (Arithmetic)</h2>
+                        <table>
+                            <tr>
+                                <th>Phép tính</th>
+                                <th>Ký hiệu</th>
+                                <th>Ví dụ</th>
+                                <th>Kết quả</th>
+                            </tr>
+                            <tr><td>Cộng</td><td>+</td><td>5 + 3</td><td>8</td></tr>
+                            <tr><td>Trừ</td><td>-</td><td>5 - 3</td><td>2</td></tr>
+                            <tr><td>Nhân</td><td>*</td><td>5 * 3</td><td>15</td></tr>
+                            <tr><td>Chia</td><td>/</td><td>5 / 2</td><td>2.5</td></tr>
+                            <tr><td>Chia lấy phần nguyên</td><td>//</td><td>5 // 2</td><td>2</td></tr>
+                            <tr><td>Chia lấy dư</td><td>%</td><td>5 % 2</td><td>1</td></tr>
+                            <tr><td>Lũy thừa</td><td>**</td><td>5 ** 2</td><td>25</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Ví dụ phép số học -->
+                <div class="slide" data-slide="10">
+                    <div class="slide-content">
+                        <h2>💡 Ví dụ phép số học</h2>
+                        <div class="code-block"><span class="comment"># Tính diện tích hình chữ nhật</span>
+chieu_dai = <span class="number">10</span>
+chieu_rong = <span class="number">5</span>
+dien_tich = chieu_dai * chieu_rong
+<span class="function">print</span>(<span class="string">f"Diện tích: {dien_tich}"</span>)  <span class="comment"># 50</span>
+
+<span class="comment"># Tính điểm trung bình</span>
+toan = <span class="number">8</span>
+ly = <span class="number">7</span>
+hoa = <span class="number">9</span>
+trung_binh = (toan + ly + hoa) / <span class="number">3</span>
+<span class="function">print</span>(<span class="string">f"Điểm TB: {trung_binh:.2f}"</span>)  <span class="comment"># 8.00</span>
+
+<span class="comment"># Kiểm tra số chẵn/lẻ</span>
+so = <span class="number">7</span>
+du = so % <span class="number">2</span>
+<span class="function">print</span>(<span class="string">f"{so} chia 2 dư {du}"</span>)  <span class="comment"># 7 chia 2 dư 1 → Lẻ</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Phép so sánh -->
+                <div class="slide" data-slide="11">
+                    <div class="slide-content">
+                        <h2>⚖️ 4. Phép so sánh (Comparison)</h2>
+                        <p>Kết quả luôn là <span class="badge bool">True</span> hoặc <span class="badge bool">False</span></p>
+                        <table>
+                            <tr>
+                                <th>Phép so sánh</th>
+                                <th>Ký hiệu</th>
+                                <th>Ví dụ</th>
+                                <th>Kết quả</th>
+                            </tr>
+                            <tr><td>Bằng</td><td>==</td><td>5 == 5</td><td>True</td></tr>
+                            <tr><td>Khác</td><td>!=</td><td>5 != 3</td><td>True</td></tr>
+                            <tr><td>Lớn hơn</td><td>></td><td>5 > 3</td><td>True</td></tr>
+                            <tr><td>Nhỏ hơn</td><td><</td><td>5 < 3</td><td>False</td></tr>
+                            <tr><td>Lớn hơn hoặc bằng</td><td>>=</td><td>5 >= 5</td><td>True</td></tr>
+                            <tr><td>Nhỏ hơn hoặc bằng</td><td><=</td><td>5 <= 3</td><td>False</td></tr>
+                        </table>
+                        <div class="info-box warning">
+                            <p>⚠️ <strong>Chú ý:</strong> <code>=</code> là gán giá trị, <code>==</code> là so sánh bằng!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Ví dụ phép so sánh -->
+                <div class="slide" data-slide="12">
+                    <div class="slide-content">
+                        <h2>💡 Ví dụ phép so sánh</h2>
+                        <div class="code-block">a = <span class="number">10</span>
+b = <span class="number">5</span>
+
+<span class="function">print</span>(a == b)   <span class="comment"># False (10 không bằng 5)</span>
+<span class="function">print</span>(a != b)   <span class="comment"># True  (10 khác 5)</span>
+<span class="function">print</span>(a > b)    <span class="comment"># True  (10 lớn hơn 5)</span>
+<span class="function">print</span>(a < b)    <span class="comment"># False (10 không nhỏ hơn 5)</span>
+<span class="function">print</span>(a >= <span class="number">10</span>)  <span class="comment"># True  (10 >= 10)</span>
+
+<span class="comment"># So sánh chuỗi (theo alphabet)</span>
+<span class="function">print</span>(<span class="string">"apple"</span> < <span class="string">"banana"</span>)  <span class="comment"># True</span>
+
+<span class="comment"># Kiểm tra điểm đậu/rớt</span>
+diem = <span class="number">6.5</span>
+<span class="function">print</span>(diem >= <span class="number">5</span>)  <span class="comment"># True → Đậu!</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 13: Phép logic -->
+                <div class="slide" data-slide="13">
+                    <div class="slide-content">
+                        <h2>🔗 5. Phép logic (Logical)</h2>
+                        <table>
+                            <tr>
+                                <th>Phép logic</th>
+                                <th>Ý nghĩa</th>
+                                <th>Ví dụ</th>
+                            </tr>
+                            <tr>
+                                <td><code>and</code></td>
+                                <td>VÀ - Cả hai đều True → True</td>
+                                <td>True and False → False</td>
+                            </tr>
+                            <tr>
+                                <td><code>or</code></td>
+                                <td>HOẶC - Ít nhất một True → True</td>
+                                <td>True or False → True</td>
+                            </tr>
+                            <tr>
+                                <td><code>not</code></td>
+                                <td>PHỦ ĐỊNH - Đảo ngược</td>
+                                <td>not True → False</td>
+                            </tr>
+                        </table>
+                        <div class="code-block">tuoi = <span class="number">20</span>
+co_cmnd = <span class="keyword">True</span>
+
+<span class="comment"># Đủ điều kiện: >= 18 tuổi VÀ có CMND</span>
+du_dieu_kien = (tuoi >= <span class="number">18</span>) <span class="keyword">and</span> co_cmnd
+<span class="function">print</span>(du_dieu_kien)  <span class="comment"># True</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 14: Bảng chân trị -->
+                <div class="slide" data-slide="14">
+                    <div class="slide-content">
+                        <h2>📊 Bảng chân trị</h2>
+                        <div style="display: flex; gap: 30px; justify-content: center;">
+                            <table style="max-width: 280px;">
+                                <tr><th colspan="3">AND</th></tr>
+                                <tr><td>True</td><td>and True</td><td>= True</td></tr>
+                                <tr><td>True</td><td>and False</td><td>= False</td></tr>
+                                <tr><td>False</td><td>and True</td><td>= False</td></tr>
+                                <tr><td>False</td><td>and False</td><td>= False</td></tr>
+                            </table>
+                            <table style="max-width: 280px;">
+                                <tr><th colspan="3">OR</th></tr>
+                                <tr><td>True</td><td>or True</td><td>= True</td></tr>
+                                <tr><td>True</td><td>or False</td><td>= True</td></tr>
+                                <tr><td>False</td><td>or True</td><td>= True</td></tr>
+                                <tr><td>False</td><td>or False</td><td>= False</td></tr>
+                            </table>
+                            <table style="max-width: 180px;">
+                                <tr><th colspan="2">NOT</th></tr>
+                                <tr><td>not True</td><td>= False</td></tr>
+                                <tr><td>not False</td><td>= True</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 15: if -->
+                <div class="slide" data-slide="15">
+                    <div class="slide-content">
+                        <h2>🔀 6. Cấu trúc rẽ nhánh - if</h2>
+                        <div class="info-box">
+                            <p><code>if</code> = "Nếu điều kiện đúng thì thực hiện"</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Cú pháp</span>
+<span class="keyword">if</span> dieu_kien:
+    <span class="comment"># Code chạy khi điều kiện = True</span>
+    <span class="comment"># (thụt vào 4 dấu cách hoặc 1 Tab)</span></div>
+                        <div class="code-block"><span class="comment"># Ví dụ: Kiểm tra đủ tuổi bầu cử</span>
+tuoi = <span class="number">20</span>
+
+<span class="keyword">if</span> tuoi >= <span class="number">18</span>:
+    <span class="function">print</span>(<span class="string">"Bạn đủ tuổi bầu cử!"</span>)
+
+<span class="comment"># Output: Bạn đủ tuổi bầu cử!</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 16: if-else -->
+                <div class="slide" data-slide="16">
+                    <div class="slide-content">
+                        <h2>🔀 if-else</h2>
+                        <div class="info-box">
+                            <p><code>else</code> = "Ngược lại, nếu điều kiện sai thì..."</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Cú pháp</span>
+<span class="keyword">if</span> dieu_kien:
+    <span class="comment"># Code khi True</span>
+<span class="keyword">else</span>:
+    <span class="comment"># Code khi False</span></div>
+                        <div class="code-block"><span class="comment"># Ví dụ: Kiểm tra đậu/rớt</span>
+diem = <span class="number">4.5</span>
+
+<span class="keyword">if</span> diem >= <span class="number">5</span>:
+    <span class="function">print</span>(<span class="string">"Đậu!"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"Rớt, học lại!"</span>)
+
+<span class="comment"># Output: Rớt, học lại!</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 17: if-elif-else -->
+                <div class="slide" data-slide="17">
+                    <div class="slide-content">
+                        <h2>🔀 if-elif-else</h2>
+                        <div class="info-box">
+                            <p><code>elif</code> = "else if" = "Còn nếu..."</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Cú pháp</span>
+<span class="keyword">if</span> dieu_kien_1:
+    <span class="comment"># Code khi điều kiện 1 đúng</span>
+<span class="keyword">elif</span> dieu_kien_2:
+    <span class="comment"># Code khi điều kiện 2 đúng</span>
+<span class="keyword">elif</span> dieu_kien_3:
+    <span class="comment"># Code khi điều kiện 3 đúng</span>
+<span class="keyword">else</span>:
+    <span class="comment"># Code khi tất cả sai</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 18: Ví dụ phân loại -->
+                <div class="slide" data-slide="18">
+                    <div class="slide-content">
+                        <h2>💡 Ví dụ: Phân loại điểm</h2>
+                        <div class="code-block">diem = <span class="number">8.5</span>
+
+<span class="keyword">if</span> diem >= <span class="number">9</span>:
+    xep_loai = <span class="string">"Xuất sắc"</span>
+<span class="keyword">elif</span> diem >= <span class="number">8</span>:
+    xep_loai = <span class="string">"Giỏi"</span>
+<span class="keyword">elif</span> diem >= <span class="number">6.5</span>:
+    xep_loai = <span class="string">"Khá"</span>
+<span class="keyword">elif</span> diem >= <span class="number">5</span>:
+    xep_loai = <span class="string">"Trung bình"</span>
+<span class="keyword">else</span>:
+    xep_loai = <span class="string">"Yếu"</span>
+
+<span class="function">print</span>(<span class="string">f"Điểm {diem} → Xếp loại: {xep_loai}"</span>)
+<span class="comment"># Output: Điểm 8.5 → Xếp loại: Giỏi</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 19: for loop -->
+                <div class="slide" data-slide="19">
+                    <div class="slide-content">
+                        <h2>🔁 7. Vòng lặp - for</h2>
+                        <div class="info-box">
+                            <p><code>for</code> = "Lặp qua từng phần tử trong danh sách"</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Lặp qua list</span>
+diem = [<span class="number">8</span>, <span class="number">9</span>, <span class="number">7</span>, <span class="number">10</span>]
+
+<span class="keyword">for</span> d <span class="keyword">in</span> diem:
+    <span class="function">print</span>(d)
+
+<span class="comment"># Output: 8, 9, 7, 10 (mỗi số 1 dòng)</span></div>
+                        <div class="code-block"><span class="comment"># Lặp qua chuỗi</span>
+<span class="keyword">for</span> chu <span class="keyword">in</span> <span class="string">"Python"</span>:
+    <span class="function">print</span>(chu)
+
+<span class="comment"># Output: P, y, t, h, o, n</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 20: while loop -->
+                <div class="slide" data-slide="20">
+                    <div class="slide-content">
+                        <h2>🔁 while loop</h2>
+                        <div class="info-box">
+                            <p><code>while</code> = "Lặp khi điều kiện còn đúng"</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Đếm từ 1 đến 5</span>
+dem = <span class="number">1</span>
+
+<span class="keyword">while</span> dem <= <span class="number">5</span>:
+    <span class="function">print</span>(dem)
+    dem = dem + <span class="number">1</span>  <span class="comment"># hoặc: dem += 1</span>
+
+<span class="comment"># Output: 1, 2, 3, 4, 5</span></div>
+                        <div class="info-box warning">
+                            <p>⚠️ <strong>Cẩn thận:</strong> Nếu quên tăng biến đếm → Vòng lặp vô hạn!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 21: range() -->
+                <div class="slide" data-slide="21">
+                    <div class="slide-content">
+                        <h2>🔢 range() - Tạo dãy số</h2>
+                        <div class="code-block"><span class="comment"># range(stop) - từ 0 đến stop-1</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>):
+    <span class="function">print</span>(i)  <span class="comment"># 0, 1, 2, 3, 4</span>
+
+<span class="comment"># range(start, stop) - từ start đến stop-1</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="number">6</span>):
+    <span class="function">print</span>(i)  <span class="comment"># 1, 2, 3, 4, 5</span>
+
+<span class="comment"># range(start, stop, step) - có bước nhảy</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">0</span>, <span class="number">10</span>, <span class="number">2</span>):
+    <span class="function">print</span>(i)  <span class="comment"># 0, 2, 4, 6, 8</span>
+
+<span class="comment"># Tính tổng 1+2+...+100</span>
+tong = <span class="number">0</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="number">101</span>):
+    tong += i
+<span class="function">print</span>(tong)  <span class="comment"># 5050</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 22: break & continue -->
+                <div class="slide" data-slide="22">
+                    <div class="slide-content">
+                        <h2>⏹️ break & ⏭️ continue</h2>
+                        <div class="code-block"><span class="comment"># break - Thoát khỏi vòng lặp</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    <span class="keyword">if</span> i == <span class="number">5</span>:
+        <span class="keyword">break</span>  <span class="comment"># Dừng khi i = 5</span>
+    <span class="function">print</span>(i)
+<span class="comment"># Output: 0, 1, 2, 3, 4</span></div>
+                        <div class="code-block"><span class="comment"># continue - Bỏ qua lần lặp hiện tại</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>):
+    <span class="keyword">if</span> i == <span class="number">2</span>:
+        <span class="keyword">continue</span>  <span class="comment"># Bỏ qua khi i = 2</span>
+    <span class="function">print</span>(i)
+<span class="comment"># Output: 0, 1, 3, 4 (không có 2)</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 23: input() -->
+                <div class="slide" data-slide="23">
+                    <div class="slide-content">
+                        <h2>⌨️ 8. input() - Nhập dữ liệu</h2>
+                        <div class="info-box">
+                            <p><code>input()</code> luôn trả về <strong>chuỗi (str)</strong>!</p>
+                        </div>
+                        <div class="code-block"><span class="comment"># Nhập tên</span>
+ten = <span class="function">input</span>(<span class="string">"Nhập tên của bạn: "</span>)
+<span class="function">print</span>(<span class="string">"Xin chào,"</span>, ten)
+
+<span class="comment"># Nhập số (cần chuyển đổi kiểu)</span>
+tuoi_str = <span class="function">input</span>(<span class="string">"Nhập tuổi: "</span>)  <span class="comment"># "20" (chuỗi)</span>
+tuoi = <span class="function">int</span>(tuoi_str)              <span class="comment"># 20 (số)</span>
+
+<span class="comment"># Cách ngắn gọn</span>
+tuoi = <span class="function">int</span>(<span class="function">input</span>(<span class="string">"Nhập tuổi: "</span>))
+diem = <span class="function">float</span>(<span class="function">input</span>(<span class="string">"Nhập điểm: "</span>))</div>
+                    </div>
+                </div>
+
+                <!-- Slide 24: print() & f-string -->
+                <div class="slide" data-slide="24">
+                    <div class="slide-content">
+                        <h2>🖨️ print() & f-string</h2>
+                        <div class="code-block"><span class="comment"># print() cơ bản</span>
+<span class="function">print</span>(<span class="string">"Hello World!"</span>)
+<span class="function">print</span>(<span class="string">"Dòng 1"</span>, <span class="string">"Dòng 2"</span>)  <span class="comment"># Cách bởi dấu cách</span>
+<span class="function">print</span>(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, sep=<span class="string">"-"</span>)     <span class="comment"># 1-2-3</span>
+
+<span class="comment"># f-string (Python 3.6+) - Cách hay nhất!</span>
+ten = <span class="string">"An"</span>
+tuoi = <span class="number">20</span>
+diem = <span class="number">8.567</span>
+
+<span class="function">print</span>(<span class="string">f"Tên: {ten}"</span>)
+<span class="function">print</span>(<span class="string">f"Tuổi: {tuoi}"</span>)
+<span class="function">print</span>(<span class="string">f"Điểm: {diem:.2f}"</span>)  <span class="comment"># 8.57 (2 chữ số thập phân)</span>
+<span class="function">print</span>(<span class="string">f"Năm sau: {tuoi + 1}"</span>)  <span class="comment"># Tính toán trong {}</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 25: Tổng kết -->
+                <div class="slide" data-slide="25">
+                    <div class="slide-content">
+                        <h2>✅ Output buổi học & Bài tập</h2>
+
+                        <div style="display: flex; gap: 40px; justify-content: center; margin-top: 30px;">
+                            <div style="flex: 1; max-width: 450px;">
+                                <h3>Output buổi học:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Hiểu biến, kiểu dữ liệu</div>
+                                    <div class="checklist-item">Dùng được các phép tính, so sánh, logic</div>
+                                    <div class="checklist-item">Viết được if-else, vòng lặp</div>
+                                    <div class="checklist-item">Nhập/xuất dữ liệu với input/print</div>
+                                </div>
+                            </div>
+
+                            <div style="flex: 1; max-width: 450px;">
+                                <h3>Bài tập về nhà:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Hoàn thành notebook thực hành</div>
+                                    <div class="checklist-item">Viết chương trình tính tiền điện theo bậc thang</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 40px; font-size: 20px; color: #667eea;">
+                            📓 Mở notebook <strong>tuan2_python_co_ban.ipynb</strong> để thực hành!
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="nav-controls">
+                <button class="nav-btn" id="prevBtn" onclick="prevSlide()">←</button>
+                <button class="nav-btn" id="nextBtn" onclick="nextSlide()">→</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Toggle for Mobile -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+        ☰
+    </button>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 26;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSlide(0);
+            updateNavigation();
+            updateProgress();
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            });
+
+            // Sidebar navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const slideNum = parseInt(this.dataset.slide);
+                    goToSlide(slideNum);
+                    // Close sidebar on mobile
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('open');
+                    }
+                });
+            });
+        });
+
+        function updateSlide(newSlideIndex) {
+            const slides = document.querySelectorAll('.slide');
+
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index < newSlideIndex) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            slides[newSlideIndex].classList.add('active');
+
+            currentSlide = newSlideIndex;
+            updateNavigation();
+            updateProgress();
+            updateSidebarActive();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                updateSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                updateSlide(currentSlide - 1);
+            }
+        }
+
+        function goToSlide(slideIndex) {
+            if (slideIndex >= 0 && slideIndex < totalSlides) {
+                updateSlide(slideIndex);
+            }
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateSidebarActive() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.slide) === currentSlide) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
