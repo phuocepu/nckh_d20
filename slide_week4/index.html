@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 4: Ôn NumPy Ma Trận + Pandas Cơ Bản</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container { display: flex; height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 { color: #667eea; margin-bottom: 20px; font-size: 18px; }
+        .nav-section { margin-bottom: 20px; }
+        .nav-section h3 {
+            font-size: 14px; color: #7f8c8d; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px; margin: 5px 0; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease; font-size: 14px;
+            color: #555; border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: #f0f4ff; border-left-color: #667eea; }
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; position: relative; overflow: hidden; }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; padding: 60px; opacity: 0;
+            transform: translateX(100%); transition: all 0.5s ease; background: white;
+            overflow-y: auto;
+        }
+        .slide.active { opacity: 1; transform: translateX(0); z-index: 1; }
+        .slide.prev { transform: translateX(-100%); }
+
+        .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+
+        h1 {
+            font-size: 48px; margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        h2 { font-size: 36px; color: #2c3e50; margin-bottom: 30px; }
+        h3 { font-size: 24px; color: #667eea; margin: 20px 0; }
+        p { font-size: 18px; line-height: 1.6; color: #555; margin: 15px 0; }
+
+        /* Table */
+        table {
+            width: 100%; max-width: 900px; margin: 30px auto;
+            border-collapse: collapse; background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 15px; text-align: left; font-size: 16px;
+        }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 15px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e; color: #d4d4d4; padding: 30px; border-radius: 12px;
+            text-align: left; font-family: 'Courier New', monospace; font-size: 16px;
+            line-height: 1.8; max-width: 800px; margin: 30px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); white-space: pre; overflow-x: auto;
+        }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #c586c0; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .module { color: #4ec9b0; }
+
+        /* Math formula */
+        .math-formula {
+            font-family: 'Georgia', serif; font-size: 22px; color: #2c3e50;
+            margin: 20px auto; padding: 20px; background: #fef9e7;
+            border-radius: 12px; border-left: 4px solid #f39c12;
+            display: inline-block; text-align: center;
+        }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px 30px; border-radius: 8px;
+            margin: 20px auto; max-width: 800px; text-align: left;
+        }
+        .info-box.warning {
+            background: linear-gradient(135deg, #f5923620 0%, #ff6b6b20 100%);
+            border-left-color: #f59236;
+        }
+        .info-box.success {
+            background: linear-gradient(135deg, #00b89420 0%, #00d4aa20 100%);
+            border-left-color: #00b894;
+        }
+
+        /* Compare layout */
+        .compare-container {
+            display: flex; gap: 30px; justify-content: center;
+            margin: 30px auto; max-width: 1000px; flex-wrap: wrap;
+        }
+        .compare-box {
+            flex: 1; min-width: 300px; background: #f8f9ff; border-radius: 12px;
+            padding: 25px; text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .compare-box .code-block { margin: 15px 0; font-size: 14px; padding: 20px; max-width: 100%; }
+
+        /* Notebook badge */
+        .notebook-badge {
+            display: inline-block; margin-top: 20px; padding: 10px 25px;
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: white;
+            border-radius: 25px; font-size: 14px; font-weight: bold;
+        }
+
+        /* Checklist */
+        .checklist { text-align: left; max-width: 600px; margin: 30px auto; }
+        .checklist-item {
+            padding: 15px; margin: 10px 0; background: #f8f9ff;
+            border-left: 4px solid #667eea; border-radius: 8px; font-size: 16px;
+        }
+        .checklist-item::before { content: "✓ "; color: #667eea; font-weight: bold; margin-right: 10px; }
+
+        /* Section divider */
+        .section-divider {
+            font-size: 14px; color: #667eea; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 10px;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; font-size: 24px; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .nav-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed; top: 0; left: 280px; right: 0;
+            height: 4px; background: rgba(255, 255, 255, 0.3); z-index: 1000;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile */
+        .sidebar-toggle {
+            display: none; position: fixed; top: 20px; left: 20px;
+            z-index: 2000; width: 40px; height: 40px; background: white;
+            border-radius: 8px; border: none; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed; left: 0; top: 0; bottom: 0;
+                z-index: 1500; transform: translateX(-100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .progress-bar { left: 0; }
+            .slide { padding: 80px 20px 20px; }
+            h1 { font-size: 32px; }
+            h2 { font-size: 24px; }
+            .compare-container { flex-direction: column; }
+        }
+
+        /* List */
+        ul {
+            text-align: left; max-width: 800px; margin: 20px auto; padding-left: 30px;
+        }
+        li { font-size: 18px; margin: 10px 0; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <h2>📐 Tuần 4</h2>
+
+            <div class="nav-section">
+                <h3>Mở đầu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Nội dung hôm nay</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Ôn NumPy - ĐSTT</h3>
+                <div class="nav-item" data-slide="2">Tổng quan np.linalg</div>
+                <div class="nav-item" data-slide="3">Bài 1: Phép toán ma trận</div>
+                <div class="nav-item" data-slide="4">Bài 2: Giải hệ PT</div>
+                <div class="nav-item" data-slide="5">Bài 3: Định thức & Nghịch đảo</div>
+                <div class="nav-item" data-slide="6">Bài 4: Tích vô hướng</div>
+                <div class="nav-item" data-slide="7">Bài 5: Hạng ma trận</div>
+                <div class="nav-item" data-slide="8">Bài 6: Trị riêng</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Pandas Cơ Bản</h3>
+                <div class="nav-item" data-slide="9">Pandas là gì?</div>
+                <div class="nav-item" data-slide="10">Tạo DataFrame</div>
+                <div class="nav-item" data-slide="11">Đọc file CSV</div>
+                <div class="nav-item" data-slide="12">Khám phá dữ liệu</div>
+                <div class="nav-item" data-slide="13">Chọn cột & lọc dòng</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Tổng kết</h3>
+                <div class="nav-item" data-slide="14">Output & BTVN</div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="slides-container" id="slidesContainer">
+
+                <!-- Slide 0: Title -->
+                <div class="slide active" data-slide="0">
+                    <div class="slide-content">
+                        <h1>📐 TUẦN 4</h1>
+                        <h2>ÔN NUMPY MA TRẬN + PANDAS CƠ BẢN</h2>
+                        <p style="font-size: 24px; margin-top: 30px; color: #667eea;">
+                            "Đại số tuyến tính qua code + Làm quen bảng dữ liệu"
+                        </p>
+                        <p style="margin-top: 50px; font-size: 18px;">
+                            Chương trình Bổ túc Kỹ năng NCKH - Toán Tin
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 1: Nội dung hôm nay -->
+                <div class="slide" data-slide="1">
+                    <div class="slide-content">
+                        <h2>🎯 Nội dung hôm nay</h2>
+                        <table>
+                            <tr><th>Thời gian</th><th>Nội dung</th><th>Hình thức</th></tr>
+                            <tr><td>10 phút</td><td>Show-and-tell: BTVN tuần 3</td><td>SV trình bày</td></tr>
+                            <tr style="background: #f0f4ff;">
+                                <td colspan="3" style="color: #667eea; font-weight: bold; text-align: center;">
+                                    PHẦN 1: ÔN TẬP NUMPY - ĐẠI SỐ TUYẾN TÍNH
+                                </td>
+                            </tr>
+                            <tr><td>10 phút</td><td>Tổng quan NumPy cho ĐSTT</td><td>Slide</td></tr>
+                            <tr><td>50 phút</td><td>6 bài toán ĐSTT thực hành</td><td>Code along + Thực hành</td></tr>
+                            <tr style="background: #f0f4ff;">
+                                <td colspan="3" style="color: #667eea; font-weight: bold; text-align: center;">
+                                    PHẦN 2: PANDAS CƠ BẢN
+                                </td>
+                            </tr>
+                            <tr><td>10 phút</td><td>Pandas là gì? DataFrame</td><td>Slide</td></tr>
+                            <tr><td>25 phút</td><td>Tạo, đọc CSV, khám phá dữ liệu</td><td>Code along</td></tr>
+                            <tr><td>15 phút</td><td>Chọn cột & lọc dòng</td><td>Thực hành</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Tổng quan np.linalg -->
+                <div class="slide" data-slide="2">
+                    <div class="slide-content">
+                        <h2>🔢 NumPy cho Đại số tuyến tính</h2>
+                        <p>Module <code style="background:#eee; padding:3px 8px; border-radius:4px;">np.linalg</code> = Linear Algebra</p>
+
+                        <table>
+                            <tr><th>Hàm</th><th>Ý nghĩa</th><th>Toán</th></tr>
+                            <tr><td><code>A @ B</code></td><td>Nhân ma trận</td><td>A &times; B</td></tr>
+                            <tr><td><code>A.T</code></td><td>Chuyển vị</td><td>A<sup>T</sup></td></tr>
+                            <tr><td><code>np.linalg.solve(A, b)</code></td><td>Giải hệ PT</td><td>Ax = b</td></tr>
+                            <tr><td><code>np.linalg.det(A)</code></td><td>Định thức</td><td>det(A)</td></tr>
+                            <tr><td><code>np.linalg.inv(A)</code></td><td>Ma trận nghịch đảo</td><td>A<sup>-1</sup></td></tr>
+                            <tr><td><code>np.linalg.matrix_rank(A)</code></td><td>Hạng ma trận</td><td>rank(A)</td></tr>
+                            <tr><td><code>np.linalg.eig(A)</code></td><td>Trị riêng, vector riêng</td><td>Av = &lambda;v</td></tr>
+                            <tr><td><code>np.dot(a, b)</code></td><td>Tích vô hướng</td><td>a &middot; b</td></tr>
+                            <tr><td><code>np.linalg.norm(a)</code></td><td>Chuẩn (độ dài)</td><td>||a||</td></tr>
+                        </table>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Sẵn sàng thực hành!</div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Bài 1 - Phép toán ma trận -->
+                <div class="slide" data-slide="3">
+                    <div class="slide-content">
+                        <h2>📝 Bài 1: Phép toán ma trận cơ bản</h2>
+                        <p class="section-divider">Ôn tập ĐSTT</p>
+
+                        <div class="compare-container">
+                            <div class="compare-box" style="border-top: 4px solid #667eea;">
+                                <h3 style="font-size: 18px;">Toán học</h3>
+                                <p style="font-size: 15px;">Cộng: A + B</p>
+                                <p style="font-size: 15px;">Nhân: A &times; B</p>
+                                <p style="font-size: 15px;">Chuyển vị: A<sup>T</sup></p>
+                                <p style="font-size: 15px;">Tính chất: (AB)<sup>T</sup> = B<sup>T</sup>A<sup>T</sup></p>
+                            </div>
+                            <div class="compare-box" style="border-top: 4px solid #2ecc71;">
+                                <h3 style="font-size: 18px;">NumPy Code</h3>
+                                <div class="code-block" style="font-size: 14px;">
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">1</span>, <span class="number">2</span>],
+              [<span class="number">3</span>, <span class="number">4</span>]])
+B = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">5</span>, <span class="number">6</span>],
+              [<span class="number">7</span>, <span class="number">8</span>]])
+
+A + B     <span class="comment"># Cộng ma trận</span>
+A @ B     <span class="comment"># Nhân ma trận</span>
+A.T       <span class="comment"># Chuyển vị</span></div>
+                            </div>
+                        </div>
+
+                        <div class="info-box">
+                            <p><strong>Lưu ý:</strong> <code>A * B</code> = nhân từng phần tử (element-wise). <code>A @ B</code> = nhân ma trận (matrix multiplication).</p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 1</div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Bài 2 - Giải hệ PT -->
+                <div class="slide" data-slide="4">
+                    <div class="slide-content">
+                        <h2>📝 Bài 2: Giải hệ phương trình tuyến tính</h2>
+                        <p class="section-divider">Ax = b</p>
+
+                        <div class="compare-container">
+                            <div class="compare-box" style="border-top: 4px solid #667eea;">
+                                <h3 style="font-size: 18px;">Hệ phương trình</h3>
+                                <div class="math-formula" style="font-size: 18px; text-align: left;">
+                                    2x + y - z = 8<br>
+                                    -3x - y + 2z = -11<br>
+                                    -2x + y + 2z = -3
+                                </div>
+                            </div>
+                            <div class="compare-box" style="border-top: 4px solid #2ecc71;">
+                                <h3 style="font-size: 18px;">Dạng ma trận Ax = b</h3>
+                                <div class="code-block" style="font-size: 14px;">
+A = <span class="module">np</span>.<span class="function">array</span>([[ <span class="number">2</span>,  <span class="number">1</span>, <span class="number">-1</span>],
+              [<span class="number">-3</span>, <span class="number">-1</span>,  <span class="number">2</span>],
+              [<span class="number">-2</span>,  <span class="number">1</span>,  <span class="number">2</span>]])
+b = <span class="module">np</span>.<span class="function">array</span>([<span class="number">8</span>, <span class="number">-11</span>, <span class="number">-3</span>])
+
+x = <span class="module">np</span>.linalg.<span class="function">solve</span>(A, b)
+<span class="comment"># x = [2, 3, -1]</span></div>
+                            </div>
+                        </div>
+
+                        <div class="info-box success">
+                            <p><strong>So với giải tay:</strong> Giải hệ 3 ẩn bằng Gauss mất ~15 phút. NumPy giải trong 1 dòng code!</p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 2</div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Bài 3 - Định thức & Nghịch đảo -->
+                <div class="slide" data-slide="5">
+                    <div class="slide-content">
+                        <h2>📝 Bài 3: Định thức & Ma trận nghịch đảo</h2>
+                        <p class="section-divider">det(A) và A<sup>-1</sup></p>
+
+                        <div class="code-block">
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">2</span>, <span class="number">1</span>],
+              [<span class="number">5</span>, <span class="number">3</span>]])
+
+<span class="comment"># Định thức</span>
+det_A = <span class="module">np</span>.linalg.<span class="function">det</span>(A)
+<span class="function">print</span>(<span class="string">f"det(A) = {det_A:.0f}"</span>)  <span class="comment"># 1</span>
+
+<span class="comment"># Ma trận nghịch đảo</span>
+A_inv = <span class="module">np</span>.linalg.<span class="function">inv</span>(A)
+<span class="function">print</span>(<span class="string">"A^(-1) ="</span>, A_inv)
+
+<span class="comment"># Kiểm tra: A × A^(-1) = I</span>
+I = A @ A_inv
+<span class="function">print</span>(<span class="module">np</span>.<span class="function">allclose</span>(I, <span class="module">np</span>.<span class="function">eye</span>(<span class="number">2</span>)))  <span class="comment"># True</span></div>
+
+                        <div class="info-box warning">
+                            <p><strong>Nhớ:</strong> Ma trận chỉ có nghịch đảo khi det(A) &ne; 0 (ma trận khả nghịch).</p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 3</div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Bài 4 - Tích vô hướng & Trực giao -->
+                <div class="slide" data-slide="6">
+                    <div class="slide-content">
+                        <h2>📝 Bài 4: Tích vô hướng & Trực giao</h2>
+                        <p class="section-divider">a &middot; b, ||a||, góc giữa 2 vector</p>
+
+                        <div class="code-block">
+<span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+a = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+b = <span class="module">np</span>.<span class="function">array</span>([<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>])
+
+<span class="comment"># Tích vô hướng (dot product)</span>
+dot = <span class="module">np</span>.<span class="function">dot</span>(a, b)           <span class="comment"># 1*4 + 2*5 + 3*6 = 32</span>
+
+<span class="comment"># Chuẩn (độ dài vector)</span>
+norm_a = <span class="module">np</span>.linalg.<span class="function">norm</span>(a)  <span class="comment"># √(1²+2²+3²) = √14</span>
+
+<span class="comment"># Góc giữa 2 vector</span>
+cos_theta = dot / (norm_a * <span class="module">np</span>.linalg.<span class="function">norm</span>(b))
+theta = <span class="module">np</span>.<span class="function">arccos</span>(cos_theta)
+<span class="function">print</span>(<span class="string">f"Góc = {np.degrees(theta):.1f}°"</span>)
+
+<span class="comment"># Trực giao: a ⊥ b khi a · b = 0</span>
+u = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>])
+v = <span class="module">np</span>.<span class="function">array</span>([<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>])
+<span class="function">print</span>(<span class="module">np</span>.<span class="function">dot</span>(u, v))  <span class="comment"># 0 → trực giao!</span></div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 4</div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Bài 5 - Hạng ma trận -->
+                <div class="slide" data-slide="7">
+                    <div class="slide-content">
+                        <h2>📝 Bài 5: Hạng ma trận & Độc lập tuyến tính</h2>
+                        <p class="section-divider">rank(A)</p>
+
+                        <div class="code-block">
+<span class="comment"># Hạng ma trận = số vector hàng/cột độc lập tuyến tính</span>
+
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],
+              [<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>],
+              [<span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>]])
+
+rank_A = <span class="module">np</span>.linalg.<span class="function">matrix_rank</span>(A)
+<span class="function">print</span>(<span class="string">f"rank(A) = {rank_A}"</span>)  <span class="comment"># 2 (hàng 3 = tổ hợp hàng 1,2)</span></div>
+
+                        <div class="info-box">
+                            <p><strong>Ứng dụng - Hệ PT Ax = b (n ẩn):</strong></p>
+                            <ul style="margin-top: 10px;">
+                                <li><strong>rank(A) = rank(A|b) = n</strong> → Nghiệm duy nhất</li>
+                                <li><strong>rank(A) = rank(A|b) &lt; n</strong> → Vô số nghiệm</li>
+                                <li><strong>rank(A) &ne; rank(A|b)</strong> → Vô nghiệm</li>
+                            </ul>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 5</div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Bài 6 - Trị riêng & Vector riêng -->
+                <div class="slide" data-slide="8">
+                    <div class="slide-content">
+                        <h2>📝 Bài 6: Trị riêng & Vector riêng</h2>
+                        <p class="section-divider">Av = &lambda;v</p>
+
+                        <div class="compare-container">
+                            <div class="compare-box" style="border-top: 4px solid #667eea;">
+                                <h3 style="font-size: 18px;">Ý nghĩa hình học</h3>
+                                <p style="font-size: 15px;">Khi nhân ma trận A với vector v:</p>
+                                <ul style="font-size: 15px; padding-left: 20px;">
+                                    <li><strong>Vector riêng v</strong>: hướng không đổi, chỉ co giãn</li>
+                                    <li><strong>Trị riêng &lambda;</strong>: hệ số co giãn</li>
+                                    <li>&lambda; &gt; 1: giãn ra</li>
+                                    <li>0 &lt; &lambda; &lt; 1: co lại</li>
+                                    <li>&lambda; &lt; 0: đảo hướng</li>
+                                </ul>
+                            </div>
+                            <div class="compare-box" style="border-top: 4px solid #2ecc71;">
+                                <h3 style="font-size: 18px;">NumPy Code</h3>
+                                <div class="code-block" style="font-size: 14px;">
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">4</span>, <span class="number">1</span>],
+              [<span class="number">2</span>, <span class="number">3</span>]])
+
+eigenvalues, eigenvectors = \
+    <span class="module">np</span>.linalg.<span class="function">eig</span>(A)
+
+<span class="comment"># Trị riêng: [5, 2]</span>
+<span class="comment"># Kiểm tra: A @ v = λ * v</span></div>
+                            </div>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 6</div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Pandas là gì? -->
+                <div class="slide" data-slide="9">
+                    <div class="slide-content">
+                        <h2>🐼 Pandas là gì?</h2>
+
+                        <div class="compare-container">
+                            <div class="compare-box" style="border-top: 4px solid #e74c3c;">
+                                <h3 style="font-size: 18px;">NumPy Array</h3>
+                                <div class="code-block" style="font-size: 14px;">
+<span class="comment"># Chỉ có số, không có tên</span>
+[[<span class="number">8.0</span>, <span class="number">7.5</span>, <span class="number">9.0</span>],
+ [<span class="number">6.5</span>, <span class="number">8.0</span>, <span class="number">7.0</span>]]
+
+<span class="comment"># Hàng 0, cột 1 là gì??</span></div>
+                                <p style="font-size: 14px; color: #e74c3c; margin-top: 10px;">Khó đọc, không có ngữ cảnh</p>
+                            </div>
+                            <div class="compare-box" style="border-top: 4px solid #2ecc71;">
+                                <h3 style="font-size: 18px;">Pandas DataFrame</h3>
+                                <div class="code-block" style="font-size: 14px;">
+<span class="comment">#    Tên     Toán   Lý   Hóa</span>
+<span class="comment"># 0  An      8.0   7.5   9.0</span>
+<span class="comment"># 1  Bình    6.5   8.0   7.0</span>
+
+<span class="comment"># df['Toán'] → cột điểm Toán</span></div>
+                                <p style="font-size: 14px; color: #2ecc71; margin-top: 10px;">Bảng có tên cột, dễ đọc!</p>
+                            </div>
+                        </div>
+
+                        <div class="info-box">
+                            <p><strong>Pandas = "Excel trong Python"</strong></p>
+                            <p>DataFrame = bảng dữ liệu có hàng, cột, tên cột. Dùng khi dữ liệu có nhiều kiểu (tên, điểm, xếp loại...) và cần thao tác theo cột.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Tạo DataFrame -->
+                <div class="slide" data-slide="10">
+                    <div class="slide-content">
+                        <h2>🛠️ Tạo DataFrame</h2>
+
+                        <div class="code-block">
+<span class="keyword">import</span> <span class="module">pandas</span> <span class="keyword">as</span> <span class="module">pd</span>
+
+<span class="comment"># Cách phổ biến nhất: từ dictionary</span>
+data = {
+    <span class="string">'Tên'</span>:  [<span class="string">'An'</span>, <span class="string">'Bình'</span>, <span class="string">'Cường'</span>, <span class="string">'Dung'</span>, <span class="string">'Em'</span>],
+    <span class="string">'Toán'</span>: [<span class="number">8.0</span>, <span class="number">6.5</span>, <span class="number">9.0</span>, <span class="number">5.0</span>, <span class="number">7.5</span>],
+    <span class="string">'Lý'</span>:  [<span class="number">7.5</span>, <span class="number">8.0</span>, <span class="number">8.5</span>, <span class="number">6.0</span>, <span class="number">7.0</span>],
+    <span class="string">'Hóa'</span>: [<span class="number">9.0</span>, <span class="number">7.0</span>, <span class="number">8.0</span>, <span class="number">4.5</span>, <span class="number">8.5</span>],
+}
+
+df = <span class="module">pd</span>.<span class="function">DataFrame</span>(data)
+<span class="function">print</span>(df)</div>
+
+                        <p style="margin-top: 10px; font-size: 16px;">Output:</p>
+                        <div class="code-block" style="font-size: 15px; background: #f8f9ff; color: #2c3e50; box-shadow: none;">
+     Tên  Toán  Lý   Hóa
+0    An   8.0  7.5   9.0
+1  Bình   6.5  8.0   7.0
+2 Cường   9.0  8.5   8.0
+3  Dung   5.0  6.0   4.5
+4    Em   7.5  7.0   8.5</div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 7</div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Đọc CSV -->
+                <div class="slide" data-slide="11">
+                    <div class="slide-content">
+                        <h2>📄 Đọc file CSV</h2>
+                        <p>CSV = Comma-Separated Values (dữ liệu cách nhau bởi dấu phẩy)</p>
+
+                        <div class="code-block">
+<span class="keyword">import</span> <span class="module">pandas</span> <span class="keyword">as</span> <span class="module">pd</span>
+
+<span class="comment"># Đọc file CSV</span>
+df = <span class="module">pd</span>.<span class="function">read_csv</span>(<span class="string">'diem_sinh_vien.csv'</span>)
+
+<span class="comment"># Xem 5 dòng đầu</span>
+df.<span class="function">head</span>()
+
+<span class="comment"># Xem 3 dòng cuối</span>
+df.<span class="function">tail</span>(<span class="number">3</span>)</div>
+
+                        <div class="info-box success">
+                            <p><strong>Thực tế:</strong> 90% thời gian làm data science bắt đầu bằng <code>pd.read_csv()</code>. Pandas đọc được CSV, Excel, JSON, SQL, HTML...</p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 8</div>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Khám phá dữ liệu -->
+                <div class="slide" data-slide="12">
+                    <div class="slide-content">
+                        <h2>🔍 Khám phá dữ liệu nhanh</h2>
+                        <p>5 lệnh "phải nhớ" khi mới mở dataset:</p>
+
+                        <table>
+                            <tr><th>Lệnh</th><th>Ý nghĩa</th><th>Output</th></tr>
+                            <tr><td><code>df.shape</code></td><td>Kích thước (hàng, cột)</td><td>(30, 6)</td></tr>
+                            <tr><td><code>df.head()</code></td><td>5 dòng đầu tiên</td><td>Xem mẫu dữ liệu</td></tr>
+                            <tr><td><code>df.info()</code></td><td>Thông tin cột, kiểu dữ liệu</td><td>Có cột nào bị thiếu?</td></tr>
+                            <tr><td><code>df.describe()</code></td><td>Thống kê mô tả</td><td>mean, std, min, max</td></tr>
+                            <tr><td><code>df.columns</code></td><td>Danh sách tên cột</td><td>Biết cột nào có</td></tr>
+                        </table>
+
+                        <div class="info-box">
+                            <p><strong>Quy trình:</strong> Mở file → <code>shape</code> → <code>head()</code> → <code>info()</code> → <code>describe()</code>. Luôn làm 4 bước này trước khi phân tích!</p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 8</div>
+                    </div>
+                </div>
+
+                <!-- Slide 13: Chọn cột & lọc dòng -->
+                <div class="slide" data-slide="13">
+                    <div class="slide-content">
+                        <h2>🎯 Chọn cột & Lọc dòng</h2>
+
+                        <div class="code-block">
+<span class="comment"># Chọn 1 cột → Series</span>
+df[<span class="string">'Toán'</span>]
+
+<span class="comment"># Chọn nhiều cột → DataFrame</span>
+df[[<span class="string">'Tên'</span>, <span class="string">'Toán'</span>, <span class="string">'Lý'</span>]]
+
+<span class="comment"># Lọc dòng theo điều kiện (giống boolean indexing!)</span>
+df[df[<span class="string">'Toán'</span>] >= <span class="number">8</span>]         <span class="comment"># SV giỏi Toán</span>
+df[df[<span class="string">'Toán'</span>] >= <span class="number">8</span>][<span class="string">'Tên'</span>]  <span class="comment"># Chỉ lấy tên</span>
+
+<span class="comment"># Kết hợp nhiều điều kiện</span>
+df[(df[<span class="string">'Toán'</span>] >= <span class="number">7</span>) & (df[<span class="string">'Lý'</span>] >= <span class="number">7</span>)]
+
+<span class="comment"># Sắp xếp</span>
+df.<span class="function">sort_values</span>(<span class="string">'Toán'</span>, ascending=<span class="keyword">False</span>)</div>
+
+                        <div class="info-box success">
+                            <p><strong>Giống NumPy!</strong> Lọc dòng trong Pandas dùng cú pháp tương tự boolean indexing: <code>df[điều_kiện]</code></p>
+                        </div>
+
+                        <div class="notebook-badge">📓 Mở Notebook → Section 9</div>
+                    </div>
+                </div>
+
+                <!-- Slide 14: Output & BTVN -->
+                <div class="slide" data-slide="14">
+                    <div class="slide-content">
+                        <h2>✅ Output buổi học & Bài tập về nhà</h2>
+
+                        <div style="display: flex; gap: 40px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                            <div style="flex: 1; max-width: 500px;">
+                                <h3>Output buổi học:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Dùng NumPy giải bài ĐSTT (hệ PT, định thức, nghịch đảo...)</div>
+                                    <div class="checklist-item">Hiểu tích vô hướng, trực giao, hạng, trị riêng qua code</div>
+                                    <div class="checklist-item">Tạo DataFrame từ dictionary</div>
+                                    <div class="checklist-item">Đọc file CSV và khám phá dữ liệu</div>
+                                    <div class="checklist-item">Chọn cột, lọc dòng trong DataFrame</div>
+                                </div>
+                            </div>
+
+                            <div style="flex: 1; max-width: 500px;">
+                                <h3>Bài tập về nhà:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Hoàn thành 6 bài ĐSTT trong notebook</div>
+                                    <div class="checklist-item">Tải 1 dataset CSV từ Kaggle</div>
+                                    <div class="checklist-item">Dùng Pandas đọc và trả lời 3 câu hỏi về dữ liệu</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 40px; font-size: 20px; color: #667eea;">
+                            📅 Tuần sau: <strong>Matplotlib</strong> - Trực quan hóa dữ liệu (vẽ biểu đồ đẹp!)
+                        </p>
+                        <p style="margin-top: 20px; font-size: 24px; color: #667eea;">
+                            🎉 Chúc các bạn học tốt!
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="nav-controls">
+                <button class="nav-btn" id="prevBtn" onclick="prevSlide()">←</button>
+                <button class="nav-btn" id="nextBtn" onclick="nextSlide()">→</button>
+            </div>
+        </main>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 15;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSlide(0);
+            updateNavigation();
+            updateProgress();
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const slideNum = parseInt(this.dataset.slide);
+                    goToSlide(slideNum);
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('open');
+                    }
+                });
+            });
+        });
+
+        function updateSlide(newSlideIndex) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index < newSlideIndex) slide.classList.add('prev');
+            });
+            slides[newSlideIndex].classList.add('active');
+            currentSlide = newSlideIndex;
+            updateNavigation();
+            updateProgress();
+            updateSidebarActive();
+        }
+
+        function nextSlide() { if (currentSlide < totalSlides - 1) updateSlide(currentSlide + 1); }
+        function prevSlide() { if (currentSlide > 0) updateSlide(currentSlide - 1); }
+        function goToSlide(slideIndex) { if (slideIndex >= 0 && slideIndex < totalSlides) updateSlide(slideIndex); }
+
+        function updateNavigation() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateSidebarActive() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.slide) === currentSlide) item.classList.add('active');
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
