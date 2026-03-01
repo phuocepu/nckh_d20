@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 5: Matplotlib - Trực quan hóa dữ liệu</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container { display: flex; height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 { color: #667eea; margin-bottom: 20px; font-size: 18px; }
+        .nav-section { margin-bottom: 20px; }
+        .nav-section h3 {
+            font-size: 14px; color: #7f8c8d; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px; margin: 5px 0; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease; font-size: 14px;
+            color: #555; border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: #f0f4ff; border-left-color: #667eea; }
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; position: relative; overflow: hidden; }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: flex-start;
+            align-items: center; padding: 30px 60px; opacity: 0;
+            transform: translateX(100%); transition: all 0.5s ease; background: white;
+            overflow-y: auto;
+        }
+        .slide.active { opacity: 1; transform: translateX(0); z-index: 1; }
+        .slide.prev { transform: translateX(-100%); }
+
+        .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+
+        h1 {
+            font-size: 48px; margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        h2 { font-size: 32px; color: #2c3e50; margin-bottom: 15px; }
+        h3 { font-size: 24px; color: #667eea; margin: 15px 0; }
+        p { font-size: 18px; line-height: 1.6; color: #555; margin: 10px 0; }
+
+        /* Table */
+        table {
+            width: 100%; max-width: 900px; margin: 20px auto;
+            border-collapse: collapse; background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 12px; text-align: left; font-size: 15px;
+        }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 0 0 12px 12px;
+            text-align: left; font-family: 'Courier New', monospace; font-size: 14px;
+            line-height: 1.7; max-width: 800px; margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); white-space: pre; overflow-x: auto;
+        }
+        .code-block.standalone { border-radius: 12px; margin: 20px auto; padding: 25px; font-size: 16px; line-height: 1.8; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #c586c0; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .module { color: #4ec9b0; }
+
+        /* Viz Preview Box */
+        .viz-box {
+            max-width: 800px; margin: 15px auto 0;
+            background: white; border: 2px solid #ddd;
+            border-radius: 12px 12px 0 0; padding: 8px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+        }
+        .viz-box canvas {
+            display: block; width: 100%; border-radius: 6px;
+            background: white;
+        }
+        .viz-code-pair { max-width: 800px; margin: 15px auto 0; }
+        .viz-code-pair .viz-box { margin: 0; border-radius: 12px 12px 0 0; border-bottom: none; }
+        .viz-code-pair .code-block { margin: 0; border-radius: 0 0 12px 12px; }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px 20px; border-radius: 8px;
+            margin: 15px auto; max-width: 800px; text-align: left; font-size: 15px;
+        }
+        .info-box.warning {
+            background: linear-gradient(135deg, #f5923620 0%, #ff6b6b20 100%);
+            border-left-color: #f59236;
+        }
+        .info-box.success {
+            background: linear-gradient(135deg, #00b89420 0%, #00d4aa20 100%);
+            border-left-color: #00b894;
+        }
+
+        /* Compare layout */
+        .compare-container {
+            display: flex; gap: 20px; justify-content: center;
+            margin: 20px auto; max-width: 1000px; flex-wrap: wrap;
+        }
+        .compare-box {
+            flex: 1; min-width: 300px; background: #f8f9ff; border-radius: 12px;
+            padding: 20px; text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .compare-box .code-block { margin: 10px 0; font-size: 13px; padding: 15px; max-width: 100%; border-radius: 12px; }
+
+        /* Notebook badge */
+        .notebook-badge {
+            display: inline-block; margin-top: 15px; padding: 8px 20px;
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: white;
+            border-radius: 25px; font-size: 13px; font-weight: bold;
+        }
+
+        /* Checklist */
+        .checklist { text-align: left; max-width: 600px; margin: 20px auto; }
+        .checklist-item {
+            padding: 12px; margin: 8px 0; background: #f8f9ff;
+            border-left: 4px solid #667eea; border-radius: 8px; font-size: 15px;
+        }
+        .checklist-item::before { content: "✓ "; color: #667eea; font-weight: bold; margin-right: 10px; }
+
+        /* Section divider */
+        .section-divider {
+            font-size: 14px; color: #667eea; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 5px;
+        }
+
+        /* Graph number badge */
+        .graph-num {
+            display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; width: 36px; height: 36px; line-height: 36px;
+            border-radius: 50%; font-weight: bold; font-size: 16px; margin-right: 10px;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; font-size: 24px; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .nav-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed; top: 0; left: 280px; right: 0;
+            height: 4px; background: rgba(255, 255, 255, 0.3); z-index: 1000;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile */
+        .sidebar-toggle {
+            display: none; position: fixed; top: 20px; left: 20px;
+            z-index: 2000; width: 40px; height: 40px; background: white;
+            border-radius: 8px; border: none; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed; left: 0; top: 0; bottom: 0;
+                z-index: 1500; transform: translateX(-100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .progress-bar { left: 0; }
+            .slide { padding: 60px 15px 15px; }
+            h1 { font-size: 32px; }
+            h2 { font-size: 24px; }
+            .compare-container { flex-direction: column; }
+        }
+
+        ul {
+            text-align: left; max-width: 800px; margin: 15px auto; padding-left: 30px;
+        }
+        li { font-size: 16px; margin: 8px 0; line-height: 1.6; }
+
+        .math-formula {
+            font-family: 'Georgia', serif; font-size: 20px; color: #2c3e50;
+            margin: 15px auto; padding: 15px; background: #fef9e7;
+            border-radius: 12px; border-left: 4px solid #f39c12;
+            display: inline-block; text-align: center;
+        }
+
+        /* Title slide centering */
+        .slide[data-slide="0"],
+        .slide[data-slide="1"],
+        .slide[data-slide="24"],
+        .slide[data-slide="25"] {
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <h2>📊 Tuần 5</h2>
+            <div class="nav-section">
+                <h3>Mở đầu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Nội dung hôm nay</div>
+            </div>
+            <div class="nav-section">
+                <h3>Cơ bản</h3>
+                <div class="nav-item" data-slide="2">Matplotlib là gì?</div>
+                <div class="nav-item" data-slide="3">Customize đồ thị</div>
+            </div>
+            <div class="nav-section">
+                <h3>Top 7 phổ biến</h3>
+                <div class="nav-item" data-slide="4">1. Line Plot</div>
+                <div class="nav-item" data-slide="5">2. Bar Chart</div>
+                <div class="nav-item" data-slide="6">3. Scatter Plot</div>
+                <div class="nav-item" data-slide="7">4. Histogram</div>
+                <div class="nav-item" data-slide="8">5. Pie Chart</div>
+                <div class="nav-item" data-slide="9">6. Heatmap</div>
+                <div class="nav-item" data-slide="10">7. Box Plot</div>
+            </div>
+            <div class="nav-section">
+                <h3>Nâng cao 2D</h3>
+                <div class="nav-item" data-slide="11">8. Fill Between</div>
+                <div class="nav-item" data-slide="12">9. Error Bar</div>
+                <div class="nav-item" data-slide="13">10. Horizontal Bar</div>
+                <div class="nav-item" data-slide="14">11. Stacked Area</div>
+                <div class="nav-item" data-slide="15">12. Contour Plot</div>
+                <div class="nav-item" data-slide="16">13. Violin Plot</div>
+                <div class="nav-item" data-slide="17">14. Stem Plot</div>
+                <div class="nav-item" data-slide="18">15. Step Plot</div>
+            </div>
+            <div class="nav-section">
+                <h3>3D & Đặc biệt</h3>
+                <div class="nav-item" data-slide="19">16. 3D Surface</div>
+                <div class="nav-item" data-slide="20">17. Polar Plot</div>
+                <div class="nav-item" data-slide="21">18. Quiver Plot</div>
+                <div class="nav-item" data-slide="22">19. 3D Wireframe</div>
+                <div class="nav-item" data-slide="23">20. Streamplot</div>
+            </div>
+            <div class="nav-section">
+                <h3>Tổng kết</h3>
+                <div class="nav-item" data-slide="24">Subplot</div>
+                <div class="nav-item" data-slide="25">Output & BTVN</div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="slides-container" id="slidesContainer">
+
+                <!-- ===== Slide 0: Title ===== -->
+                <div class="slide active" data-slide="0">
+                    <div class="slide-content">
+                        <h1>📊 TUẦN 5</h1>
+                        <h2>MATPLOTLIB - TRỰC QUAN HÓA DỮ LIỆU</h2>
+                        <p style="font-size: 24px; margin-top: 30px; color: #667eea;">"Một hình ảnh đáng giá ngàn dòng số"</p>
+                        <p style="margin-top: 50px; font-size: 18px;">Chương trình Bổ túc Kỹ năng NCKH - Toán Tin</p>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 1: Nội dung ===== -->
+                <div class="slide" data-slide="1">
+                    <div class="slide-content">
+                        <h2>🎯 Nội dung hôm nay</h2>
+                        <table>
+                            <tr><th>Thời gian</th><th>Nội dung</th><th>Hình thức</th></tr>
+                            <tr><td>10 phút</td><td>Show-and-tell: BTVN tuần 4</td><td>SV trình bày</td></tr>
+                            <tr style="background:#f0f4ff;"><td colspan="3" style="color:#667eea;font-weight:bold;text-align:center;">CƠ BẢN MATPLOTLIB</td></tr>
+                            <tr><td>15 phút</td><td>Import, Figure, Axes, Customize</td><td>Slide + Code along</td></tr>
+                            <tr style="background:#f0f4ff;"><td colspan="3" style="color:#667eea;font-weight:bold;text-align:center;">BỘ SƯU TẬP 20 LOẠI ĐỒ THỊ</td></tr>
+                            <tr><td>40 phút</td><td>Top 7 (Line, Bar, Scatter, Histogram, Pie, Heatmap, Box)</td><td>Code along</td></tr>
+                            <tr><td>30 phút</td><td>8 nâng cao 2D</td><td>Code along</td></tr>
+                            <tr><td>20 phút</td><td>5 loại 3D & Đặc biệt</td><td>Demo</td></tr>
+                            <tr style="background:#f0f4ff;"><td colspan="3" style="color:#667eea;font-weight:bold;text-align:center;">TỔNG HỢP</td></tr>
+                            <tr><td>15 phút</td><td>Subplot - Ghép nhiều hình</td><td>Thực hành</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 2: Matplotlib cơ bản ===== -->
+                <div class="slide" data-slide="2">
+                    <div class="slide-content">
+                        <h2>🎨 Matplotlib là gì?</h2>
+                        <p>Thư viện vẽ đồ thị phổ biến nhất trong Python</p>
+                        <div class="code-block standalone">
+<span class="keyword">import</span> <span class="module">matplotlib.pyplot</span> <span class="keyword">as</span> <span class="module">plt</span>
+<span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="comment"># Quy trình 4 bước:</span>
+x = <span class="module">np</span>.<span class="function">linspace</span>(<span class="number">0</span>, <span class="number">10</span>, <span class="number">100</span>)  <span class="comment"># 1. Tạo dữ liệu</span>
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x))        <span class="comment"># 2. Vẽ</span>
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">"Hàm sin(x)"</span>)        <span class="comment"># 3. Trang trí</span>
+<span class="module">plt</span>.<span class="function">show</span>()                      <span class="comment"># 4. Hiện</span></div>
+                        <div class="info-box">
+                            <p><strong>Cấu trúc:</strong> <code>Figure</code> = khung giấy &rarr; <code>Axes</code> = vùng vẽ. Một Figure có thể chứa nhiều Axes (subplot).</p>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 1</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 3: Customize ===== -->
+                <div class="slide" data-slide="3">
+                    <div class="slide-content">
+                        <h2>🛠️ Customize đồ thị</h2>
+                        <div class="code-block standalone">
+<span class="module">plt</span>.<span class="function">figure</span>(figsize=(<span class="number">10</span>, <span class="number">6</span>))     <span class="comment"># Kích thước (rộng, cao) inch</span>
+<span class="module">plt</span>.<span class="function">plot</span>(x, y,
+     color=<span class="string">'red'</span>,              <span class="comment"># Màu</span>
+     linewidth=<span class="number">2</span>,              <span class="comment"># Độ dày đường</span>
+     linestyle=<span class="string">'--'</span>,            <span class="comment"># Kiểu nét (-, --, :, -.)</span>
+     marker=<span class="string">'o'</span>,               <span class="comment"># Điểm đánh dấu</span>
+     label=<span class="string">'Tên đường'</span>)        <span class="comment"># Tên cho legend</span>
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Tiêu đề'</span>, fontsize=<span class="number">16</span>)
+<span class="module">plt</span>.<span class="function">xlabel</span>(<span class="string">'Trục X'</span>);  <span class="module">plt</span>.<span class="function">ylabel</span>(<span class="string">'Trục Y'</span>)
+<span class="module">plt</span>.<span class="function">legend</span>()                     <span class="comment"># Hiện chú thích</span>
+<span class="module">plt</span>.<span class="function">grid</span>(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)      <span class="comment"># Lưới nền</span>
+<span class="module">plt</span>.<span class="function">tight_layout</span>()               <span class="comment"># Tự chỉnh layout</span>
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 1</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 4: Line Plot ===== -->
+                <div class="slide" data-slide="4">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">1</span> Line Plot - Đồ thị đường</h2>
+                        <p class="section-divider">Phổ biến nhất &bull; Vẽ hàm số, xu hướng, chuỗi thời gian</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz4" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x), label=<span class="string">'sin(x)'</span>, linewidth=<span class="number">2</span>)
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">cos</span>(x), label=<span class="string">'cos(x)'</span>, linewidth=<span class="number">2</span>)
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x)+<span class="module">np</span>.<span class="function">cos</span>(x), linestyle=<span class="string">'--'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Các hàm lượng giác'</span>)
+<span class="module">plt</span>.<span class="function">legend</span>(); <span class="module">plt</span>.<span class="function">grid</span>(<span class="keyword">True</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 2</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 5: Bar Chart ===== -->
+                <div class="slide" data-slide="5">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">2</span> Bar Chart - Biểu đồ cột</h2>
+                        <p class="section-divider">So sánh giá trị giữa các nhóm rời rạc</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz5" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Diện tích hình có cùng chu vi = 12</span>
+hinh = [<span class="string">'Tròn'</span>, <span class="string">'Vuông'</span>, <span class="string">'Đều 6'</span>, <span class="string">'Đều 3'</span>]
+dien_tich = [P**<span class="number">2</span>/(<span class="number">4</span>*<span class="module">np</span>.pi), (P/<span class="number">4</span>)**<span class="number">2</span>, ...]
+<span class="module">plt</span>.<span class="function">bar</span>(hinh, dien_tich, color=[...])
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Diện tích hình cùng chu vi = 12'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box success"><p><strong>Toán:</strong> Trong các hình cùng chu vi, hình tròn có diện tích lớn nhất!</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 3</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 6: Scatter ===== -->
+                <div class="slide" data-slide="6">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">3</span> Scatter Plot - Đồ thị phân tán</h2>
+                        <p class="section-divider">Mối quan hệ giữa 2 biến &bull; Phân cụm dữ liệu</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz6" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">scatter</span>(x, y,
+         c=dist,              <span class="comment"># Màu theo khoảng cách</span>
+         cmap=<span class="string">'viridis'</span>,       <span class="comment"># Bảng màu</span>
+         alpha=<span class="number">0.6</span>, s=<span class="number">30</span>)
+<span class="module">plt</span>.<span class="function">colorbar</span>(label=<span class="string">'Khoảng cách tới gốc'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Phân phối chuẩn 2D'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 4</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 7: Histogram ===== -->
+                <div class="slide" data-slide="7">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">4</span> Histogram - Biểu đồ tần suất</h2>
+                        <p class="section-divider">Phân phối dữ liệu &bull; Tần suất xuất hiện</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz7" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Tung 2 xúc xắc 10000 lần</span>
+tong = xuc_xac_1 + xuc_xac_2
+<span class="module">plt</span>.<span class="function">hist</span>(tong, bins=<span class="number">11</span>, range=(<span class="number">1.5</span>,<span class="number">12.5</span>),
+     edgecolor=<span class="string">'black'</span>, color=<span class="string">'#3498db'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Phân phối tổng 2 xúc xắc'</span>)
+<span class="module">plt</span>.<span class="function">xticks</span>(<span class="function">range</span>(<span class="number">2</span>,<span class="number">13</span>)); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Xác suất:</strong> Tổng = 7 có xác suất cao nhất (6/36 = 16.7%) &rarr; dạng chuông!</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 5</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 8: Pie ===== -->
+                <div class="slide" data-slide="8">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">5</span> Pie Chart - Biểu đồ tròn</h2>
+                        <p class="section-divider">Tỷ lệ phần trăm &bull; Phân bổ thành phần</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz8" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Nguyên tố vs hợp số trong [1, 100]</span>
+<span class="module">plt</span>.<span class="function">pie</span>([primes, composites, <span class="number">1</span>],
+     labels=[<span class="string">'Nguyên tố'</span>,<span class="string">'Hợp số'</span>,<span class="string">'Số 1'</span>],
+     autopct=<span class="string">'%1.1f%%'</span>, startangle=<span class="number">90</span>,
+     explode=(<span class="number">0.05</span>, <span class="number">0</span>, <span class="number">0</span>))
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 6</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 9: Heatmap ===== -->
+                <div class="slide" data-slide="9">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">6</span> Heatmap - Bản đồ nhiệt</h2>
+                        <p class="section-divider">Ma trận &bull; Tương quan &bull; Dữ liệu 2D dạng lưới</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz9" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Bảng cửu chương 10×10</span>
+bang = <span class="module">np</span>.<span class="function">outer</span>(<span class="module">np</span>.<span class="function">arange</span>(<span class="number">1</span>,<span class="number">11</span>), <span class="module">np</span>.<span class="function">arange</span>(<span class="number">1</span>,<span class="number">11</span>))
+<span class="module">plt</span>.<span class="function">imshow</span>(bang, cmap=<span class="string">'YlOrRd'</span>)
+<span class="module">plt</span>.<span class="function">colorbar</span>(label=<span class="string">'Giá trị'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Bảng cửu chương'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 7</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 10: Box Plot ===== -->
+                <div class="slide" data-slide="10">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">7</span> Box Plot - Biểu đồ hộp</h2>
+                        <p class="section-divider">So sánh phân phối &bull; Phát hiện outlier</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz10" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">boxplot</span>([df[<span class="string">'Toan'</span>], df[<span class="string">'Ly'</span>], df[<span class="string">'Hoa'</span>], df[<span class="string">'Anh'</span>]],
+         labels=[<span class="string">'Toán'</span>,<span class="string">'Lý'</span>,<span class="string">'Hóa'</span>,<span class="string">'Anh'</span>],
+         patch_artist=<span class="keyword">True</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Phân phối điểm các môn'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Đọc:</strong> Hộp = Q1–Q3 (50%), đường giữa = median, râu = min/max, chấm = outlier.</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 8</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 11: Fill Between ===== -->
+                <div class="slide" data-slide="11">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">8</span> Fill Between - Tô vùng</h2>
+                        <p class="section-divider">Tích phân &bull; Khoảng tin cậy &bull; Vùng giữa 2 đường</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz11" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Minh họa ∫₀^π sin(x) dx = 2</span>
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x), <span class="string">'b-'</span>, linewidth=<span class="number">2</span>)
+<span class="module">plt</span>.<span class="function">fill_between</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x), alpha=<span class="number">0.3</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Minh họa tích phân'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 9</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 12: Error Bar ===== -->
+                <div class="slide" data-slide="12">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">9</span> Error Bar - Thanh sai số</h2>
+                        <p class="section-divider">Sai số đo lường &bull; Nghiên cứu thực nghiệm</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz12" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">errorbar</span>(lan_do, means, yerr=stds,
+           fmt=<span class="string">'o-'</span>, capsize=<span class="number">5</span>, capthick=<span class="number">2</span>,
+           color=<span class="string">'#e74c3c'</span>, markersize=<span class="number">8</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Kết quả đo (mean ± std)'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 10</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 13: Horizontal Bar ===== -->
+                <div class="slide" data-slide="13">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">10</span> Horizontal Bar - Cột ngang</h2>
+                        <p class="section-divider">Xếp hạng &bull; So sánh khi nhãn dài</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz13" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Hằng số toán học nổi tiếng</span>
+hang_so = [<span class="string">'√2'</span>, <span class="string">'φ'</span>, <span class="string">'√3'</span>, <span class="string">'e'</span>, <span class="string">'π'</span>]
+<span class="module">plt</span>.<span class="function">barh</span>(hang_so, gia_tri, color=<span class="string">'#9b59b6'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Hằng số toán học'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 11</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 14: Stacked Area ===== -->
+                <div class="slide" data-slide="14">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">11</span> Stacked Area - Vùng chồng</h2>
+                        <p class="section-divider">Tích lũy &bull; Đóng góp thành phần</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz14" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Chuỗi Taylor: e^x ≈ 1 + x + x²/2! + ...</span>
+<span class="module">plt</span>.<span class="function">stackplot</span>(x, t0, t1, t2, t3, t4,
+            labels=[<span class="string">'1'</span>,<span class="string">'x'</span>,<span class="string">'x²/2!'</span>,<span class="string">'x³/3!'</span>,<span class="string">'x⁴/4!'</span>])
+<span class="module">plt</span>.<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">exp</span>(x), <span class="string">'k--'</span>, label=<span class="string">'e^x'</span>)
+<span class="module">plt</span>.<span class="function">legend</span>(); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 12</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 15: Contour ===== -->
+                <div class="slide" data-slide="15">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">12</span> Contour Plot - Đường đồng mức</h2>
+                        <p class="section-divider">Hàm 2 biến &bull; Bề mặt nhìn từ trên xuống</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz15" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+X, Y = <span class="module">np</span>.<span class="function">meshgrid</span>(x, y)
+Z = X**<span class="number">2</span> + Y**<span class="number">2</span>
+<span class="module">plt</span>.<span class="function">contourf</span>(X, Y, Z, levels=<span class="number">20</span>, cmap=<span class="string">'RdYlBu_r'</span>)
+<span class="module">plt</span>.<span class="function">colorbar</span>(label=<span class="string">'f(x,y)'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'f(x,y) = x² + y²'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Toán:</strong> x²+y² = c &rarr; đường tròn bán kính √c.</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 13</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 16: Violin ===== -->
+                <div class="slide" data-slide="16">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">13</span> Violin Plot - Biểu đồ violin</h2>
+                        <p class="section-divider">Box plot + density kết hợp</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz16" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">violinplot</span>([normal, uniform, bimodal],
+             showmeans=<span class="keyword">True</span>, showmedians=<span class="keyword">True</span>)
+<span class="module">plt</span>.<span class="function">xticks</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>], [<span class="string">'Chuẩn'</span>,<span class="string">'Đều'</span>,<span class="string">'Hai đỉnh'</span>])
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'So sánh phân phối'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 14</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 17: Stem ===== -->
+                <div class="slide" data-slide="17">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">14</span> Stem Plot - Đồ thị thân-lá</h2>
+                        <p class="section-divider">Dãy số rời rạc &bull; Tín hiệu số</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz17" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+fib = <span class="function">fibonacci</span>(<span class="number">20</span>)
+<span class="module">plt</span>.<span class="function">stem</span>(<span class="function">range</span>(<span class="number">20</span>), fib)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Dãy Fibonacci'</span>)
+<span class="module">plt</span>.<span class="function">xlabel</span>(<span class="string">'n'</span>); <span class="module">plt</span>.<span class="function">ylabel</span>(<span class="string">'F(n)'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Khi nào?</strong> Dữ liệu <strong>rời rạc</strong> (dãy số, tín hiệu, xác suất) &rarr; stem rõ hơn line plot.</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 15</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 18: Step ===== -->
+                <div class="slide" data-slide="18">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">15</span> Step Plot - Đồ thị bậc thang</h2>
+                        <p class="section-divider">Hàm bậc thang &bull; CDF &bull; Giá trị rời rạc</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz18" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="module">plt</span>.<span class="function">step</span>(x, <span class="module">np</span>.<span class="function">floor</span>(x), where=<span class="string">'post'</span>,
+     linewidth=<span class="number">2</span>, color=<span class="string">'#e74c3c'</span>, label=<span class="string">'⌊x⌋'</span>)
+<span class="module">plt</span>.<span class="function">plot</span>(x, x, <span class="string">'--'</span>, alpha=<span class="number">0.5</span>, label=<span class="string">'y=x'</span>)
+<span class="module">plt</span>.<span class="function">legend</span>(); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 16</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 19: 3D Surface ===== -->
+                <div class="slide" data-slide="19">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">16</span> 3D Surface - Mặt 3D</h2>
+                        <p class="section-divider">Hàm 2 biến z = f(x,y)</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz19" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="keyword">from</span> <span class="module">mpl_toolkits.mplot3d</span> <span class="keyword">import</span> Axes3D
+fig = <span class="module">plt</span>.<span class="function">figure</span>()
+ax = fig.<span class="function">add_subplot</span>(<span class="number">111</span>, projection=<span class="string">'3d'</span>)
+ax.<span class="function">plot_surface</span>(X, Y, X**<span class="number">2</span>+Y**<span class="number">2</span>, cmap=<span class="string">'viridis'</span>)
+ax.<span class="function">set_title</span>(<span class="string">'z = x² + y²'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 17</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 20: Polar ===== -->
+                <div class="slide" data-slide="20">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">17</span> Polar Plot - Đồ thị cực</h2>
+                        <p class="section-divider">Tọa độ cực (r, &theta;) &bull; Hoa hồng, xoắn ốc</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz20" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+fig, axes = <span class="module">plt</span>.<span class="function">subplots</span>(<span class="number">2</span>, <span class="number">2</span>,
+    subplot_kw={<span class="string">'projection'</span>: <span class="string">'polar'</span>})
+<span class="keyword">for</span> i, n <span class="keyword">in</span> <span class="function">enumerate</span>([<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]):
+    ax = axes[i//<span class="number">2</span>][i%<span class="number">2</span>]
+    ax.<span class="function">plot</span>(theta, <span class="module">np</span>.<span class="function">abs</span>(<span class="module">np</span>.<span class="function">cos</span>(n*theta)))
+    ax.<span class="function">set_title</span>(<span class="string">f'r=cos({n}θ)'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 18</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 21: Quiver ===== -->
+                <div class="slide" data-slide="21">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">18</span> Quiver Plot - Trường vector</h2>
+                        <p class="section-divider">Gradient &bull; Trường lực &bull; Trường vận tốc</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz21" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># ∇f(x,y) = (2x, 2y) cho f = x²+y²</span>
+<span class="module">plt</span>.<span class="function">quiver</span>(X, Y, <span class="number">2</span>*X, <span class="number">2</span>*Y,
+         <span class="module">np</span>.<span class="function">sqrt</span>((<span class="number">2</span>*X)**<span class="number">2</span>+(<span class="number">2</span>*Y)**<span class="number">2</span>), cmap=<span class="string">'Reds'</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Gradient ∇f = (2x, 2y)'</span>)
+<span class="module">plt</span>.<span class="function">axis</span>(<span class="string">'equal'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Ứng dụng:</strong> Gradient descent "đi ngược gradient" &rarr; tìm cực tiểu!</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 19</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 22: 3D Wireframe ===== -->
+                <div class="slide" data-slide="22">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">19</span> 3D Wireframe - Lưới 3D</h2>
+                        <p class="section-divider">Khung xương mặt 3D &bull; Nhẹ hơn Surface</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz22" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+ax.<span class="function">plot_wireframe</span>(X, Y, X**<span class="number">2</span>-Y**<span class="number">2</span>,
+                  color=<span class="string">'#3498db'</span>, linewidth=<span class="number">0.5</span>)
+ax.<span class="function">set_title</span>(<span class="string">'Yên ngựa z = x² - y²'</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>Toán:</strong> z = x²-y² có điểm yên ngựa tại (0,0): cực tiểu theo x, cực đại theo y.</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 20</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 23: Streamplot ===== -->
+                <div class="slide" data-slide="23">
+                    <div class="slide-content">
+                        <h2><span class="graph-num">20</span> Streamplot - Đường dòng</h2>
+                        <p class="section-divider">Dòng chảy &bull; Trường lực liên tục</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz23" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+<span class="comment"># Trường xoáy F = (-y, x)</span>
+<span class="module">plt</span>.<span class="function">streamplot</span>(X, Y, -Y, X,
+             color=speed, cmap=<span class="string">'cool'</span>,
+             linewidth=<span class="number">1.5</span>, density=<span class="number">1.5</span>)
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">'Trường xoáy'</span>); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box"><p><strong>So với Quiver:</strong> Quiver = mũi tên rời rạc. Streamplot = đường liền, trực quan hơn cho dòng chảy.</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 21</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 24: Subplot ===== -->
+                <div class="slide" data-slide="24">
+                    <div class="slide-content">
+                        <h2>🧩 Subplot - Ghép nhiều đồ thị</h2>
+                        <p class="section-divider">Kỹ năng quan trọng khi trình bày kết quả</p>
+                        <div class="viz-code-pair">
+                            <div class="viz-box"><canvas id="viz24" width="700" height="220"></canvas></div>
+                            <div class="code-block">
+fig, axes = <span class="module">plt</span>.<span class="function">subplots</span>(<span class="number">2</span>, <span class="number">2</span>, figsize=(<span class="number">12</span>,<span class="number">10</span>))
+axes[<span class="number">0</span>,<span class="number">0</span>].<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">sin</span>(x))     <span class="comment"># Trái trên</span>
+axes[<span class="number">0</span>,<span class="number">1</span>].<span class="function">plot</span>(x, <span class="module">np</span>.<span class="function">cos</span>(x))     <span class="comment"># Phải trên</span>
+axes[<span class="number">1</span>,<span class="number">0</span>].<span class="function">bar</span>([<span class="string">'A'</span>,<span class="string">'B'</span>,<span class="string">'C'</span>],[<span class="number">3</span>,<span class="number">7</span>,<span class="number">5</span>]) <span class="comment"># Trái dưới</span>
+axes[<span class="number">1</span>,<span class="number">1</span>].<span class="function">hist</span>(data)             <span class="comment"># Phải dưới</span>
+<span class="module">plt</span>.<span class="function">tight_layout</span>(); <span class="module">plt</span>.<span class="function">show</span>()</div>
+                        </div>
+                        <div class="info-box success"><p><strong>Mẹo:</strong> <code>plt.subplots(rows, cols)</code> &rarr; <code>axes[i,j]</code> để vẽ vào ô (i,j).</p></div>
+                        <div class="notebook-badge">📓 Mở Notebook &rarr; Section 22</div>
+                    </div>
+                </div>
+
+                <!-- ===== Slide 25: Output & BTVN ===== -->
+                <div class="slide" data-slide="25">
+                    <div class="slide-content">
+                        <h2>✅ Output buổi học & Bài tập về nhà</h2>
+                        <div style="display:flex;gap:40px;justify-content:center;margin-top:30px;flex-wrap:wrap;">
+                            <div style="flex:1;max-width:500px;">
+                                <h3>Output buổi học:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Biết cách tạo đồ thị với matplotlib</div>
+                                    <div class="checklist-item">Nắm 20 loại đồ thị và khi nào dùng</div>
+                                    <div class="checklist-item">Customize: title, label, legend, color</div>
+                                    <div class="checklist-item">Tạo subplot ghép nhiều hình</div>
+                                </div>
+                            </div>
+                            <div style="flex:1;max-width:500px;">
+                                <h3>Bài tập về nhà:</h3>
+                                <div class="checklist">
+                                    <div class="checklist-item">Hoàn thành bài tập trong notebook</div>
+                                    <div class="checklist-item">Tạo 1 figure 4 subplot từ dataset tuần 4</div>
+                                    <div class="checklist-item">Thử vẽ 1 đồ thị 3D hoặc Polar</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="margin-top:40px;font-size:20px;color:#667eea;">📅 Tuần sau: <strong>Debug & Đọc code</strong></p>
+                        <p style="margin-top:20px;font-size:24px;color:#667eea;">🎉 Chúc các bạn học tốt!</p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="nav-controls">
+                <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&#8592;</button>
+                <button class="nav-btn" id="nextBtn" onclick="nextSlide()">&#8594;</button>
+            </div>
+        </main>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">&#9776;</button>
+
+    <script>
+        // =================== SLIDE NAVIGATION ===================
+        let currentSlide = 0;
+        const totalSlides = 26;
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSlide(0); updateNavigation(); updateProgress();
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    goToSlide(parseInt(this.dataset.slide));
+                    if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+                });
+            });
+            drawAllVisualizations();
+        });
+        function updateSlide(n) {
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.remove('active','prev');
+                if (i < n) s.classList.add('prev');
+            });
+            document.querySelectorAll('.slide')[n].classList.add('active');
+            currentSlide = n; updateNavigation(); updateProgress(); updateSidebarActive();
+        }
+        function nextSlide() { if (currentSlide < totalSlides-1) updateSlide(currentSlide+1); }
+        function prevSlide() { if (currentSlide > 0) updateSlide(currentSlide-1); }
+        function goToSlide(n) { if (n >= 0 && n < totalSlides) updateSlide(n); }
+        function updateNavigation() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides-1;
+        }
+        function updateProgress() {
+            document.getElementById('progressFill').style.width = ((currentSlide+1)/totalSlides*100)+'%';
+        }
+        function updateSidebarActive() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.slide) === currentSlide) item.classList.add('active');
+            });
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        // =================== CANVAS VISUALIZATIONS ===================
+        function drawAllVisualizations() {
+            var dpr = window.devicePixelRatio || 1;
+
+            function setup(id) {
+                var c = document.getElementById(id);
+                if (!c) return null;
+                c.width = 700 * dpr; c.height = 220 * dpr;
+                c.style.width = '700px'; c.style.height = '220px';
+                var ctx = c.getContext('2d');
+                ctx.scale(dpr, dpr);
+                ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 700, 220);
+                return ctx;
+            }
+            function drawAxes(ctx, m, w, h, title) {
+                ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(m, h-m); ctx.lineTo(w-15, h-m); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(m, h-m); ctx.lineTo(m, 15); ctx.stroke();
+                // Grid
+                ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.5;
+                for (var i = 1; i < 5; i++) {
+                    var gy = h-m - i*(h-m-15)/5;
+                    ctx.beginPath(); ctx.moveTo(m, gy); ctx.lineTo(w-15, gy); ctx.stroke();
+                }
+                // Title
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(title, w/2, 16);
+                ctx.textAlign = 'start';
+            }
+
+            // 1. LINE PLOT
+            var ctx = setup('viz4');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Các hàm lượng giác');
+                var pw = 635, ph = 160, ox = 50, oy = 30;
+                [[Math.sin, '#3498db', 'sin(x)'], [Math.cos, '#e67e22', 'cos(x)'],
+                 [function(x){return Math.sin(x)+Math.cos(x);}, '#2ecc71', 'sin+cos']].forEach(function(f, fi) {
+                    ctx.strokeStyle = f[1]; ctx.lineWidth = 2.5;
+                    if (fi === 2) { ctx.setLineDash([6,4]); } else { ctx.setLineDash([]); }
+                    ctx.beginPath();
+                    for (var i = 0; i <= 200; i++) {
+                        var t = i/200, x = t*2*Math.PI;
+                        var px = ox + t*pw, py = oy + ph/2 - f[0](x)*ph/2.8;
+                        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                    ctx.fillStyle = f[1]; ctx.font = '11px sans-serif';
+                    ctx.fillText(f[2], 600, 45 + fi*16);
+                });
+                ctx.setLineDash([]);
+                ctx.strokeStyle = '#aaa'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(50, 30+ph/2); ctx.lineTo(685, 30+ph/2); ctx.stroke();
+            }
+
+            // 2. BAR CHART
+            ctx = setup('viz5');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Diện tích hình có cùng chu vi = 12');
+                var vals = [11.46, 9, 10.39, 6.93];
+                var labels = ['Tròn', 'Vuông', 'Đều 6', 'Đều 3'];
+                var colors = ['#e74c3c','#3498db','#2ecc71','#f39c12'];
+                var bw = 100, gap = 40, startX = 110;
+                for (var i = 0; i < 4; i++) {
+                    var bh = vals[i]/12 * 150;
+                    ctx.fillStyle = colors[i];
+                    ctx.fillRect(startX + i*(bw+gap), 195-bh, bw, bh);
+                    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText(labels[i], startX + i*(bw+gap) + bw/2, 210);
+                    ctx.fillText(vals[i].toFixed(1), startX + i*(bw+gap) + bw/2, 190-bh);
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // 3. SCATTER
+            ctx = setup('viz6');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Phân phối chuẩn 2D (500 điểm)');
+                var seed = 42;
+                function rand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
+                function randn() { var u = rand(), v = rand(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+                for (var i = 0; i < 300; i++) {
+                    var dx = randn(), dy = randn();
+                    var px = 350 + dx*100, py = 115 + dy*65;
+                    var dist = Math.sqrt(dx*dx+dy*dy);
+                    var r = Math.min(255, Math.floor(dist*80));
+                    var g = Math.max(0, 200-Math.floor(dist*60));
+                    ctx.fillStyle = 'rgba('+Math.floor(68+dist*40)+','+Math.floor(200-dist*50)+','+Math.floor(100+dist*30)+',0.6)';
+                    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            // 4. HISTOGRAM
+            ctx = setup('viz7');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Tổng 2 xúc xắc (10000 lần)');
+                var bins = [0, 278, 556, 833, 1111, 1389, 1667, 1389, 1111, 833, 556];
+                var maxV = 1667, bw = 52, sx = 70;
+                for (var i = 0; i < 11; i++) {
+                    var bh = bins[i]/maxV * 150;
+                    ctx.fillStyle = '#3498db'; ctx.globalAlpha = 0.8;
+                    ctx.fillRect(sx + i*bw, 195-bh, bw-2, bh);
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = '#222'; ctx.lineWidth = 0.8;
+                    ctx.strokeRect(sx + i*bw, 195-bh, bw-2, bh);
+                    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText(i+2, sx + i*bw + bw/2 - 1, 208);
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // 5. PIE CHART
+            ctx = setup('viz8');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Phân loại số trong [1, 100]', 350, 16);
+                var cx = 300, cy = 125, r = 85;
+                var slices = [{v:25,c:'#e74c3c',l:'Nguyên tố 25%'},{v:74,c:'#3498db',l:'Hợp số 74%'},{v:1,c:'#95a5a6',l:'Số 1'}];
+                var total = 100, startA = -Math.PI/2;
+                slices.forEach(function(s) {
+                    var angle = s.v/total * 2 * Math.PI;
+                    ctx.fillStyle = s.c; ctx.beginPath();
+                    ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, startA, startA+angle); ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+                    var mid = startA + angle/2;
+                    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif';
+                    if (s.v > 5) ctx.fillText(s.l, cx + Math.cos(mid)*(r*0.6), cy + Math.sin(mid)*(r*0.6)+4);
+                    startA += angle;
+                });
+                ctx.textAlign = 'start';
+            }
+
+            // 6. HEATMAP
+            ctx = setup('viz9');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Bảng cửu chương 10×10', 350, 16);
+                var gs = 18, ox = 80, oy = 25;
+                for (var i = 0; i < 10; i++) {
+                    for (var j = 0; j < 10; j++) {
+                        var v = (i+1)*(j+1);
+                        var ratio = v/100;
+                        var r = Math.floor(255), g = Math.floor(255*(1-ratio*0.8)), b = Math.floor(60*(1-ratio));
+                        ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
+                        ctx.fillRect(ox+j*gs, oy+i*gs, gs-1, gs-1);
+                        if (gs > 14) {
+                            ctx.fillStyle = ratio > 0.6 ? 'white' : '#333';
+                            ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+                            ctx.fillText(v, ox+j*gs+gs/2, oy+i*gs+gs/2+3);
+                        }
+                    }
+                    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+                    ctx.fillText(i+1, ox-5, oy+i*gs+gs/2+3);
+                    ctx.textAlign = 'center';
+                    ctx.fillText(i+1, ox+i*gs+gs/2, oy+10*gs+12);
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // 7. BOX PLOT
+            ctx = setup('viz10');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Phân phối điểm các môn');
+                var boxes = [
+                    {q1:5.5, med:7, q3:8.2, lo:3, hi:10, label:'Toán'},
+                    {q1:5, med:6.5, q3:8, lo:3.5, hi:9.5, label:'Lý'},
+                    {q1:5.5, med:7.5, q3:8.5, lo:3, hi:10, label:'Hóa'},
+                    {q1:5, med:6.8, q3:8, lo:4, hi:9, label:'Anh'}
+                ];
+                var bw = 80, gap = 50, sx = 100;
+                boxes.forEach(function(b, i) {
+                    var x = sx + i*(bw+gap);
+                    function ty(v) { return 195 - (v/10)*160; }
+                    ctx.fillStyle = 'rgba(52,152,219,0.5)';
+                    ctx.fillRect(x, ty(b.q3), bw, ty(b.q1)-ty(b.q3));
+                    ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x, ty(b.q3), bw, ty(b.q1)-ty(b.q3));
+                    ctx.beginPath(); ctx.moveTo(x, ty(b.med)); ctx.lineTo(x+bw, ty(b.med)); ctx.lineWidth = 2.5; ctx.stroke();
+                    ctx.lineWidth = 1; ctx.beginPath();
+                    ctx.moveTo(x+bw/2, ty(b.q3)); ctx.lineTo(x+bw/2, ty(b.hi)); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x+bw/2, ty(b.q1)); ctx.lineTo(x+bw/2, ty(b.lo)); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x+15, ty(b.hi)); ctx.lineTo(x+bw-15, ty(b.hi)); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x+15, ty(b.lo)); ctx.lineTo(x+bw-15, ty(b.lo)); ctx.stroke();
+                    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText(b.label, x+bw/2, 210);
+                });
+                ctx.textAlign = 'start';
+            }
+
+            // 8. FILL BETWEEN
+            ctx = setup('viz11');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, '∫₀^π sin(x) dx = 2');
+                var pw = 600, ox = 60, oy = 195;
+                ctx.fillStyle = 'rgba(52,152,219,0.3)'; ctx.beginPath(); ctx.moveTo(ox, oy);
+                for (var i = 0; i <= 200; i++) {
+                    var t = i/200, x = t*Math.PI, px = ox+t*pw, py = oy - Math.sin(x)*155;
+                    ctx.lineTo(px, py);
+                }
+                ctx.lineTo(ox+pw, oy); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 2.5; ctx.beginPath();
+                for (var i = 0; i <= 200; i++) {
+                    var t = i/200, px = ox+t*pw, py = oy - Math.sin(t*Math.PI)*155;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+
+            // 9. ERROR BAR
+            ctx = setup('viz12');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Kết quả đo (mean ± std)');
+                var pts = [{x:130,y:100,e:25},{x:240,y:85,e:18},{x:350,y:95,e:30},{x:460,y:90,e:22},{x:570,y:105,e:20}];
+                ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2;
+                ctx.beginPath(); pts.forEach(function(p,i) { i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y); }); ctx.stroke();
+                pts.forEach(function(p) {
+                    ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y-p.e); ctx.lineTo(p.x, p.y+p.e); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(p.x-8, p.y-p.e); ctx.lineTo(p.x+8, p.y-p.e); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(p.x-8, p.y+p.e); ctx.lineTo(p.x+8, p.y+p.e); ctx.stroke();
+                    ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+                });
+                var labels = ['Lần 1','Lần 2','Lần 3','Lần 4','Lần 5'];
+                ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                pts.forEach(function(p,i) { ctx.fillText(labels[i], p.x, 210); });
+                ctx.textAlign = 'start';
+            }
+
+            // 10. HORIZONTAL BAR
+            ctx = setup('viz13');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Hằng số toán học nổi tiếng', 350, 16);
+                var items = [['√2',1.414],['φ',1.618],['√3',1.732],['e',2.718],['π',3.142]];
+                var maxV = 3.2, bh = 28, gap = 8, sx = 120, sy = 30;
+                items.forEach(function(it, i) {
+                    var bw = it[1]/maxV * 450;
+                    ctx.fillStyle = '#9b59b6'; ctx.fillRect(sx, sy+i*(bh+gap), bw, bh);
+                    ctx.fillStyle = '#333'; ctx.font = '12px sans-serif'; ctx.textAlign = 'right';
+                    ctx.fillText(it[0], sx-10, sy+i*(bh+gap)+bh/2+4);
+                    ctx.textAlign = 'left'; ctx.fillText(it[1].toFixed(3), sx+bw+8, sy+i*(bh+gap)+bh/2+4);
+                });
+                ctx.textAlign = 'start';
+            }
+
+            // 11. STACKED AREA
+            ctx = setup('viz14');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Chuỗi Taylor → e^x');
+                var colors = ['#3498db','#2ecc71','#e74c3c','#f39c12','#9b59b6'];
+                var pw = 600, ox = 60, base = 195;
+                for (var layer = 4; layer >= 0; layer--) {
+                    ctx.fillStyle = colors[layer]; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.moveTo(ox, base);
+                    for (var i = 0; i <= 100; i++) {
+                        var t = i/100, x = t*3, sum = 0;
+                        for (var k = 0; k <= layer; k++) {
+                            var term = 1; for (var f = 1; f <= k; f++) term *= x/f;
+                            sum += term;
+                        }
+                        ctx.lineTo(ox+t*pw, base - Math.min(sum, 20)/20*160);
+                    }
+                    ctx.lineTo(ox+pw, base); ctx.closePath(); ctx.fill();
+                }
+                ctx.globalAlpha = 1; ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.setLineDash([6,4]); ctx.beginPath();
+                for (var i = 0; i <= 100; i++) {
+                    var t = i/100, px = ox+t*pw, py = base - Math.min(Math.exp(t*3),20)/20*160;
+                    i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+                }
+                ctx.stroke(); ctx.setLineDash([]);
+                ctx.fillStyle = '#222'; ctx.font = '11px sans-serif'; ctx.fillText('e^x', 620, 55);
+            }
+
+            // 12. CONTOUR
+            ctx = setup('viz15');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Đường đồng mức f(x,y) = x² + y²', 350, 16);
+                var cx = 350, cy = 120, maxR = 85;
+                for (var ring = 10; ring >= 1; ring--) {
+                    var ratio = ring/10;
+                    var r = Math.floor(220*(1-ratio)+30), g = Math.floor(100*(1-ratio)+100), b = Math.floor(255*ratio);
+                    ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
+                    ctx.beginPath(); ctx.arc(cx, cy, maxR*ratio, 0, Math.PI*2); ctx.fill();
+                }
+                for (var ring = 1; ring <= 10; ring++) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 0.5;
+                    ctx.beginPath(); ctx.arc(cx, cy, maxR*ring/10, 0, Math.PI*2); ctx.stroke();
+                }
+                ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('x', 630, cy+4); ctx.fillText('y', cx, 215);
+                ctx.textAlign = 'start';
+            }
+
+            // 13. VIOLIN
+            ctx = setup('viz16');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'So sánh hình dạng phân phối');
+                var violins = [
+                    {x:180, label:'Chuẩn', w:function(t){return Math.exp(-t*t*2)*40;}},
+                    {x:350, label:'Đều', w:function(t){return Math.abs(t)<0.8?35:0;}},
+                    {x:520, label:'Hai đỉnh', w:function(t){return (Math.exp(-(t-0.5)*(t-0.5)*8)+Math.exp(-(t+0.5)*(t+0.5)*8))*25;}}
+                ];
+                violins.forEach(function(v) {
+                    ctx.fillStyle = 'rgba(52,152,219,0.5)'; ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    for (var i = -20; i <= 20; i++) {
+                        var t = i/20, py = 110-t*70, w = v.w(t);
+                        ctx.lineTo(v.x+w, py);
+                    }
+                    for (var i = 20; i >= -20; i--) {
+                        var t = i/20, py = 110-t*70, w = v.w(t);
+                        ctx.lineTo(v.x-w, py);
+                    }
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText(v.label, v.x, 210);
+                });
+                ctx.textAlign = 'start';
+            }
+
+            // 14. STEM
+            ctx = setup('viz17');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Dãy Fibonacci');
+                var fib = [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181];
+                var maxF = 4181, pw = 600, ox = 65;
+                ctx.strokeStyle = '#aaa'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(50, 195); ctx.lineTo(680, 195); ctx.stroke();
+                fib.forEach(function(f, i) {
+                    var px = ox + i/19*pw, h = Math.log(f+1)/Math.log(maxF+1)*155;
+                    ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(px, 195); ctx.lineTo(px, 195-h); ctx.stroke();
+                    ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(px, 195-h, 4, 0, Math.PI*2); ctx.fill();
+                });
+            }
+
+            // 15. STEP
+            ctx = setup('viz18');
+            if (ctx) {
+                drawAxes(ctx, 50, 700, 220, 'Hàm phần nguyên ⌊x⌋');
+                var pw = 600, ox = 65, oy = 195;
+                ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(ox, oy-80); ctx.lineTo(ox+pw, oy-80); ctx.stroke();
+                // y=x dashed
+                ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1; ctx.setLineDash([4,4]); ctx.beginPath();
+                ctx.moveTo(ox, oy); ctx.lineTo(ox+pw, oy-160); ctx.stroke(); ctx.setLineDash([]);
+                // step
+                ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2.5;
+                for (var i = -1; i < 6; i++) {
+                    var x1 = ox + (i+1)/7*pw, x2 = ox + (i+2)/7*pw;
+                    var y = oy - (i+1)/6*160;
+                    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+                }
+                ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                for (var i = 0; i <= 6; i++) ctx.fillText(i-1, ox+i/7*pw+pw/14, 210);
+                ctx.textAlign = 'start';
+            }
+
+            // 16. 3D SURFACE
+            ctx = setup('viz19');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Paraboloid z = x² + y²', 350, 16);
+                var cx = 350, cy = 140;
+                // Draw ellipses to suggest paraboloid
+                for (var i = 8; i >= 1; i--) {
+                    var r = i*10, yoff = -i*i*0.8;
+                    ctx.strokeStyle = 'rgba(52,152,219,'+(0.3+i*0.08)+')';
+                    ctx.fillStyle = 'rgba(52,152,219,'+(0.05+i*0.02)+')';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.ellipse(cx, cy+yoff, r*3, r*1.2, 0, 0, Math.PI*2);
+                    ctx.fill(); ctx.stroke();
+                }
+                // Side curves
+                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2; ctx.beginPath();
+                for (var i = -30; i <= 30; i++) {
+                    var t = i/30, px = cx+t*90, py = cy-t*t*60;
+                    i===-30 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+                }
+                ctx.stroke();
+                ctx.fillStyle = '#555'; ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left'; ctx.fillText('x', 460, cy+5); ctx.fillText('z', cx-5, 35); ctx.fillText('y', 250, cy+50);
+                ctx.textAlign = 'start';
+            }
+
+            // 17. POLAR
+            ctx = setup('viz20');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Đường cong hoa hồng r = cos(nθ)', 350, 14);
+                var centers = [[175,70],[525,70],[175,160],[525,160]];
+                var ns = [2,3,4,5], r = 48;
+                centers.forEach(function(c, idx) {
+                    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 0.5;
+                    ctx.beginPath(); ctx.arc(c[0], c[1], r, 0, Math.PI*2); ctx.stroke();
+                    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2; ctx.beginPath();
+                    for (var i = 0; i <= 360; i++) {
+                        var th = i*Math.PI/180;
+                        var rv = Math.abs(Math.cos(ns[idx]*th))*r;
+                        var px = c[0]+rv*Math.cos(th), py = c[1]+rv*Math.sin(th);
+                        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+                    }
+                    ctx.stroke();
+                    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif';
+                    ctx.fillText('n='+ns[idx], c[0]-10, c[1]+r+14);
+                });
+                ctx.textAlign = 'start';
+            }
+
+            // 18. QUIVER
+            ctx = setup('viz21');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Gradient ∇f = (2x, 2y)', 350, 16);
+                var cx = 350, cy = 120;
+                for (var i = -4; i <= 4; i++) {
+                    for (var j = -3; j <= 3; j++) {
+                        if (i===0 && j===0) continue;
+                        var px = cx+i*40, py = cy+j*28;
+                        var len = Math.sqrt(i*i+j*j);
+                        var al = Math.min(len*4, 18);
+                        var ang = Math.atan2(-j, i);
+                        var ratio = len/5;
+                        ctx.strokeStyle = 'rgb('+Math.floor(200*ratio+55)+','+Math.floor(80*(1-ratio))+','+Math.floor(80*(1-ratio))+')';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.moveTo(px, py);
+                        ctx.lineTo(px+Math.cos(ang)*al, py-Math.sin(ang)*al); ctx.stroke();
+                        // arrowhead
+                        var ax = px+Math.cos(ang)*al, ay = py-Math.sin(ang)*al;
+                        ctx.fillStyle = ctx.strokeStyle; ctx.beginPath();
+                        ctx.moveTo(ax, ay);
+                        ctx.lineTo(ax-Math.cos(ang-0.4)*5, ay+Math.sin(ang-0.4)*5);
+                        ctx.lineTo(ax-Math.cos(ang+0.4)*5, ay+Math.sin(ang+0.4)*5);
+                        ctx.closePath(); ctx.fill();
+                    }
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // 19. 3D WIREFRAME
+            ctx = setup('viz22');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Yên ngựa z = x² - y²', 350, 16);
+                var cx = 350, cy = 130;
+                ctx.strokeStyle = '#3498db'; ctx.lineWidth = 0.8;
+                // Draw wireframe lines along x
+                for (var j = -4; j <= 4; j++) {
+                    ctx.beginPath();
+                    for (var i = -10; i <= 10; i++) {
+                        var x = i/10, y = j/4;
+                        var z = x*x - y*y;
+                        var px = cx + x*120 + y*40;
+                        var py = cy - z*40 - y*20;
+                        i===-10 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+                    }
+                    ctx.stroke();
+                }
+                // Draw wireframe lines along y
+                for (var i = -5; i <= 5; i++) {
+                    ctx.beginPath();
+                    for (var j = -8; j <= 8; j++) {
+                        var x = i/5, y = j/8;
+                        var z = x*x - y*y;
+                        var px = cx + x*120 + y*40;
+                        var py = cy - z*40 - y*20;
+                        j===-8 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+                    }
+                    ctx.stroke();
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // 20. STREAMPLOT
+            ctx = setup('viz23');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Trường xoáy F = (-y, x)', 350, 16);
+                var cx = 350, cy = 120;
+                var colors = ['#00bcd4','#0097a7','#00838f','#006064','#26c6da','#4dd0e1','#80deea'];
+                for (var s = 0; s < 7; s++) {
+                    var r = 20 + s*12;
+                    ctx.strokeStyle = colors[s]; ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    for (var a = 0; a <= 340; a += 2) {
+                        var th = a*Math.PI/180;
+                        var px = cx + r*Math.cos(th), py = cy + r*Math.sin(th);
+                        a===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+                    }
+                    ctx.stroke();
+                    // arrowhead
+                    var th = 340*Math.PI/180;
+                    var ax = cx+r*Math.cos(th), ay = cy+r*Math.sin(th);
+                    var tang = th + Math.PI/2;
+                    ctx.fillStyle = colors[s]; ctx.beginPath();
+                    ctx.moveTo(ax+Math.cos(tang)*6, ay+Math.sin(tang)*6);
+                    ctx.lineTo(ax-Math.cos(tang-0.5)*5, ay-Math.sin(tang-0.5)*5);
+                    ctx.lineTo(ax-Math.cos(tang+0.5)*5, ay-Math.sin(tang+0.5)*5);
+                    ctx.closePath(); ctx.fill();
+                }
+                ctx.textAlign = 'start';
+            }
+
+            // SUBPLOT (slide 24)
+            ctx = setup('viz24');
+            if (ctx) {
+                ctx.fillStyle = '#333'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('plt.subplots(2, 2)', 350, 14);
+                // 4 panels
+                var panels = [[30,25,310,85],[370,25,310,85],[30,120,310,85],[370,120,310,85]];
+                panels.forEach(function(p, idx) {
+                    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+                    ctx.strokeRect(p[0],p[1],p[2],p[3]);
+                    ctx.fillStyle = '#f8f9ff'; ctx.fillRect(p[0]+1,p[1]+1,p[2]-2,p[3]-2);
+                });
+                // Panel 0: sin
+                ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath();
+                for (var i=0;i<=100;i++){var t=i/100;var px=40+t*290,py=67-Math.sin(t*2*Math.PI)*30;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+                ctx.stroke();
+                ctx.fillStyle='#555';ctx.font='10px sans-serif';ctx.fillText('sin(x)',165,38);
+                // Panel 1: cos
+                ctx.strokeStyle='#3498db';ctx.lineWidth=2;ctx.beginPath();
+                for(var i=0;i<=100;i++){var t=i/100;var px=380+t*290,py=67-Math.cos(t*2*Math.PI)*30;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+                ctx.stroke();
+                ctx.fillStyle='#555';ctx.fillText('cos(x)',505,38);
+                // Panel 2: bars
+                var bx=[60,110,160,210],bh=[20,50,35,60];
+                bx.forEach(function(x,i){ctx.fillStyle='#2ecc71';ctx.fillRect(x,195-bh[i],35,bh[i]);});
+                ctx.fillStyle='#555';ctx.fillText('Bar',165,133);
+                // Panel 3: hist-like
+                var hx=390,hw=25;
+                [15,25,45,55,40,30,20].forEach(function(h,i){ctx.fillStyle='#f39c12';ctx.fillRect(hx+i*hw+i*5,195-h,hw,h);});
+                ctx.fillStyle='#555';ctx.fillText('Histogram',505,133);
+                ctx.textAlign='start';
+            }
+        }
+    </script>
+</body>
+</html>
