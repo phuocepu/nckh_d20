@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 6: Debug, Đọc Code & AI Hỗ Trợ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container { display: flex; height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 { color: #667eea; margin-bottom: 20px; font-size: 18px; }
+        .nav-section { margin-bottom: 20px; }
+        .nav-section h3 {
+            font-size: 14px; color: #7f8c8d; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px; margin: 5px 0; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease; font-size: 14px;
+            color: #555; border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: #f0f4ff; border-left-color: #667eea; }
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; position: relative; overflow: hidden; }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; padding: 30px 60px; opacity: 0;
+            transform: translateX(100%); transition: all 0.5s ease; background: white;
+            overflow-y: auto;
+        }
+        .slide.active { opacity: 1; transform: translateX(0); z-index: 1; }
+        .slide.prev { transform: translateX(-100%); }
+
+        .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+
+        h1 {
+            font-size: 48px; margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        h2 { font-size: 32px; color: #2c3e50; margin-bottom: 15px; }
+        h3 { font-size: 24px; color: #667eea; margin: 15px 0; }
+        p { font-size: 18px; line-height: 1.6; color: #555; margin: 10px 0; }
+
+        /* Table */
+        table {
+            width: 100%; max-width: 900px; margin: 20px auto;
+            border-collapse: collapse; background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 12px; text-align: left; font-size: 15px;
+        }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e; color: #d4d4d4; padding: 25px; border-radius: 12px;
+            text-align: left; font-family: 'Courier New', monospace; font-size: 16px;
+            line-height: 1.8; max-width: 800px; margin: 20px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); white-space: pre; overflow-x: auto;
+        }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #c586c0; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .module { color: #4ec9b0; }
+        .code-block .error { color: #f44747; font-weight: bold; }
+        .code-block .error-msg { color: #f44747; }
+        .code-block .fix { color: #4ec9b0; }
+        .code-block .strikethrough { text-decoration: line-through; opacity: 0.5; }
+
+        /* Error vs Fix pair */
+        .error-fix-pair {
+            display: flex; gap: 20px; justify-content: center;
+            margin: 20px auto; max-width: 1000px; flex-wrap: wrap;
+        }
+        .error-box, .fix-box {
+            flex: 1; min-width: 380px; border-radius: 12px; overflow: hidden;
+        }
+        .error-box .box-label, .fix-box .box-label {
+            padding: 8px 15px; font-size: 14px; font-weight: bold; text-align: center;
+        }
+        .error-box .box-label { background: #e74c3c; color: white; }
+        .fix-box .box-label { background: #2ecc71; color: white; }
+        .error-box .code-block, .fix-box .code-block {
+            margin: 0; border-radius: 0 0 12px 12px; font-size: 14px;
+            line-height: 1.7; padding: 20px;
+        }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px 20px; border-radius: 8px;
+            margin: 15px auto; max-width: 800px; text-align: left; font-size: 15px;
+        }
+        .info-box.warning {
+            background: linear-gradient(135deg, #f5923620 0%, #ff6b6b20 100%);
+            border-left-color: #f59236;
+        }
+        .info-box.success {
+            background: linear-gradient(135deg, #00b89420 0%, #00d4aa20 100%);
+            border-left-color: #00b894;
+        }
+        .info-box.error {
+            background: linear-gradient(135deg, #e74c3c20 0%, #c0392b20 100%);
+            border-left-color: #e74c3c;
+        }
+
+        /* Compare layout */
+        .compare-container {
+            display: flex; gap: 20px; justify-content: center;
+            margin: 20px auto; max-width: 1000px; flex-wrap: wrap;
+        }
+        .compare-box {
+            flex: 1; min-width: 300px; background: #f8f9ff; border-radius: 12px;
+            padding: 20px; text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .compare-box .code-block { margin: 10px 0; font-size: 13px; padding: 15px; max-width: 100%; border-radius: 12px; }
+
+        /* Notebook badge */
+        .notebook-badge {
+            display: inline-block; margin-top: 15px; padding: 8px 20px;
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: white;
+            border-radius: 25px; font-size: 13px; font-weight: bold;
+        }
+
+        /* Checklist */
+        .checklist { text-align: left; max-width: 600px; margin: 20px auto; }
+        .checklist-item {
+            padding: 12px; margin: 8px 0; background: #f8f9ff;
+            border-left: 4px solid #667eea; border-radius: 8px; font-size: 15px;
+        }
+        .checklist-item::before { content: "\2713 "; color: #667eea; font-weight: bold; margin-right: 10px; }
+
+        /* Section divider */
+        .section-divider {
+            font-size: 14px; color: #667eea; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 5px;
+        }
+
+        /* Step number badge */
+        .step-num {
+            display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; width: 36px; height: 36px; line-height: 36px;
+            border-radius: 50%; font-weight: bold; font-size: 16px; margin-right: 10px;
+        }
+
+        /* Flowchart */
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin: 25px auto; max-width: 900px; flex-wrap: wrap;
+        }
+        .flow-step {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; padding: 15px 20px; border-radius: 12px;
+            font-size: 15px; font-weight: bold; text-align: center; min-width: 150px;
+        }
+        .flow-arrow { font-size: 28px; color: #667eea; }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; font-size: 24px; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .nav-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed; top: 0; left: 280px; right: 0;
+            height: 4px; background: rgba(255, 255, 255, 0.3); z-index: 1000;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile */
+        .sidebar-toggle {
+            display: none; position: fixed; top: 20px; left: 20px;
+            z-index: 2000; width: 40px; height: 40px; background: white;
+            border-radius: 8px; border: none; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed; left: 0; top: 0; bottom: 0;
+                z-index: 1500; transform: translateX(-100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .progress-bar { left: 0; }
+            .slide { padding: 60px 15px 15px; }
+            h1 { font-size: 32px; }
+            h2 { font-size: 24px; }
+            .compare-container, .error-fix-pair { flex-direction: column; }
+        }
+
+        ul, ol {
+            text-align: left; max-width: 800px; margin: 15px auto; padding-left: 30px;
+        }
+        li { font-size: 16px; margin: 8px 0; line-height: 1.6; }
+
+        /* Traceback box */
+        .traceback-box {
+            background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px;
+            text-align: left; font-family: 'Courier New', monospace; font-size: 14px;
+            line-height: 1.6; max-width: 800px; margin: 15px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); white-space: pre; overflow-x: auto;
+            border-left: 4px solid #e74c3c;
+        }
+        .traceback-box .tb-header { color: #f44747; font-weight: bold; }
+        .traceback-box .tb-file { color: #569cd6; }
+        .traceback-box .tb-line { color: #dcdcaa; }
+        .traceback-box .tb-error { color: #f44747; font-weight: bold; }
+
+        /* Prompt box for AI */
+        .prompt-box {
+            background: #f0f4ff; border: 2px solid #667eea; border-radius: 12px;
+            padding: 20px; max-width: 800px; margin: 15px auto; text-align: left;
+        }
+        .prompt-box .prompt-label {
+            font-size: 13px; color: #667eea; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .prompt-box .prompt-text {
+            font-size: 15px; color: #2c3e50; line-height: 1.6;
+            font-family: 'Courier New', monospace; background: white;
+            padding: 15px; border-radius: 8px; border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <h2>🐛 Tuần 6</h2>
+            <div class="nav-section">
+                <h3>Mở đầu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Nội dung hôm nay</div>
+            </div>
+            <div class="nav-section">
+                <h3>Debug cơ bản</h3>
+                <div class="nav-item" data-slide="2">Debug là gì?</div>
+                <div class="nav-item" data-slide="3">Quy trình debug</div>
+                <div class="nav-item" data-slide="4">SyntaxError</div>
+                <div class="nav-item" data-slide="5">NameError</div>
+                <div class="nav-item" data-slide="6">TypeError</div>
+                <div class="nav-item" data-slide="7">IndexError</div>
+                <div class="nav-item" data-slide="8">ValueError</div>
+                <div class="nav-item" data-slide="9">KeyError</div>
+                <div class="nav-item" data-slide="10">ImportError</div>
+            </div>
+            <div class="nav-section">
+                <h3>Lỗi thư viện</h3>
+                <div class="nav-item" data-slide="11">Lỗi NumPy</div>
+                <div class="nav-item" data-slide="12">Lỗi Pandas</div>
+                <div class="nav-item" data-slide="13">Lỗi Matplotlib</div>
+            </div>
+            <div class="nav-section">
+                <h3>Kỹ thuật debug</h3>
+                <div class="nav-item" data-slide="14">Print debugging</div>
+                <div class="nav-item" data-slide="15">Try-Except</div>
+                <div class="nav-item" data-slide="16">Debug trong Jupyter</div>
+            </div>
+            <div class="nav-section">
+                <h3>Đọc code</h3>
+                <div class="nav-item" data-slide="17">Tại sao đọc code?</div>
+                <div class="nav-item" data-slide="18">Chiến lược đọc code</div>
+            </div>
+            <div class="nav-section">
+                <h3>AI hỗ trợ</h3>
+                <div class="nav-item" data-slide="19">AI tools</div>
+                <div class="nav-item" data-slide="20">Prompt hiệu quả</div>
+                <div class="nav-item" data-slide="21">Demo AI debug</div>
+            </div>
+            <div class="nav-section">
+                <h3>Thực hành</h3>
+                <div class="nav-item" data-slide="22">Bài tập: Tìm 5 lỗi</div>
+                <div class="nav-item" data-slide="23">Output & BTVN</div>
+            </div>
+        </nav>
+
+        <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+
+        <div class="main-content">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+            <!-- Slide 0: Title -->
+            <div class="slide active" data-slide="0">
+                <div class="slide-content">
+                    <p class="section-divider">Tuần 6</p>
+                    <h1>Debug, Đọc Code & AI Hỗ Trợ</h1>
+                    <p style="font-size: 24px; margin: 20px 0;">"Code không chạy? Bình tĩnh, đọc lỗi"</p>
+                    <p style="font-size: 16px; color: #999; margin-top: 30px;">Chương trình Bổ túc Kỹ năng NCKH - Toán Tin</p>
+                </div>
+            </div>
+
+            <!-- Slide 1: Lịch trình -->
+            <div class="slide" data-slide="1">
+                <div class="slide-content">
+                    <h2>Nội dung hôm nay</h2>
+                    <table>
+                        <tr><th>STT</th><th>Nội dung</th><th>Thời gian</th></tr>
+                        <tr><td>1</td><td>Debug là gì? Quy trình debug</td><td>10 phút</td></tr>
+                        <tr><td>2</td><td>7 lỗi Python cơ bản</td><td>25 phút</td></tr>
+                        <tr><td>3</td><td>Lỗi thư viện: NumPy, Pandas, Matplotlib</td><td>20 phút</td></tr>
+                        <tr><td>4</td><td>Kỹ thuật debug: print, try-except, Jupyter</td><td>20 phút</td></tr>
+                        <tr><td>5</td><td>Đọc code người khác</td><td>15 phút</td></tr>
+                        <tr><td>6</td><td>AI hỗ trợ debug & đọc code</td><td>15 phút</td></tr>
+                        <tr><td>7</td><td>Bài tập: Tìm và sửa 5 lỗi</td><td>20 phút</td></tr>
+                    </table>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; tuan6_debug.ipynb</div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Debug là gì? -->
+            <div class="slide" data-slide="2">
+                <div class="slide-content">
+                    <p class="section-divider">Phần 1</p>
+                    <h2>Debug là gì?</h2>
+                    <div class="info-box" style="text-align: center; font-size: 18px;">
+                        <strong>Debug</strong> = Tìm và sửa lỗi (bug) trong code
+                    </div>
+                    <div class="compare-container">
+                        <div class="compare-box">
+                            <h3 style="color: #e74c3c;">Sai lầm thường gặp</h3>
+                            <ul>
+                                <li>"Code sai rồi, làm lại từ đầu!"</li>
+                                <li>"Tôi không biết lỗi ở đâu"</li>
+                                <li>Copy code người khác mà không hiểu</li>
+                                <li>Hoảng loạn khi thấy lỗi đỏ</li>
+                            </ul>
+                        </div>
+                        <div class="compare-box">
+                            <h3 style="color: #2ecc71;">Tư duy đúng</h3>
+                            <ul>
+                                <li>Lỗi là bình thường, ai cũng gặp</li>
+                                <li>Thông báo lỗi = <strong>bản đồ chỉ đường</strong></li>
+                                <li>Đọc lỗi từ dưới lên</li>
+                                <li>Google / AI là bạn, không phải kẻ thù</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Fun fact:</strong> "Bug" đầu tiên là một con bướm bị kẹt trong máy tính Harvard Mark II (1947). Từ đó "debug" = gỡ lỗi!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 1</div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Quy trình debug -->
+            <div class="slide" data-slide="3">
+                <div class="slide-content">
+                    <h2>Quy trình Debug 4 bước</h2>
+                    <div class="flow-container">
+                        <div class="flow-step"><span class="step-num">1</span><br>Đọc lỗi<br><small>(đọc từ dưới lên)</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step"><span class="step-num">2</span><br>Xác định vị trí<br><small>(dòng nào, file nào)</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step"><span class="step-num">3</span><br>Hiểu nguyên nhân<br><small>(tại sao sai?)</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step"><span class="step-num">4</span><br>Sửa + Kiểm tra<br><small>(chạy lại để test)</small></div>
+                    </div>
+                    <div class="traceback-box"><span class="tb-header">Traceback (most recent call last):</span>
+  <span class="tb-file">File "bai_tap.py", line 5</span>, in &lt;module&gt;    <span class="comment">&larr; (2) Vị trí: dòng 5</span>
+    <span class="tb-line">ket_qua = tinh_tong(a, b)</span>           <span class="comment">&larr; (3) Code gây lỗi</span>
+  <span class="tb-file">File "bai_tap.py", line 2</span>, in tinh_tong
+    <span class="tb-line">return x + y</span>
+<span class="tb-error">TypeError: can only concatenate str to str</span> <span class="comment">&larr; (1) Đọc đây trước!</span></div>
+                    <div class="info-box warning">
+                        <strong>Mẹo:</strong> Luôn đọc dòng <strong>cuối cùng</strong> của traceback trước - đó là loại lỗi và mô tả nguyên nhân!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: SyntaxError -->
+            <div class="slide" data-slide="4">
+                <div class="slide-content">
+                    <h2><span class="step-num">1</span> SyntaxError</h2>
+                    <p>Lỗi cú pháp - Python không hiểu code của bạn</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Thiếu dấu : sau for</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>)
+    <span class="function">print</span>(i)
+
+<span class="comment"># Thiếu đóng ngoặc</span>
+x = (<span class="number">1</span> + <span class="number">2</span>) * (<span class="number">3</span> + <span class="number">4</span>
+
+<span class="comment"># Indent sai</span>
+<span class="keyword">if</span> x > <span class="number">0</span>:
+<span class="function">print</span>(<span class="string">"dương"</span>)</div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Thêm dấu :</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>)<span class="fix">:</span>
+    <span class="function">print</span>(i)
+
+<span class="comment"># Đóng ngoặc</span>
+x = (<span class="number">1</span> + <span class="number">2</span>) * (<span class="number">3</span> + <span class="number">4</span><span class="fix">)</span>
+
+<span class="comment"># Thêm indent (4 spaces)</span>
+<span class="keyword">if</span> x > <span class="number">0</span>:
+<span class="fix">    </span><span class="function">print</span>(<span class="string">"dương"</span>)</div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 2</div>
+                </div>
+            </div>
+
+            <!-- Slide 5: NameError -->
+            <div class="slide" data-slide="5">
+                <div class="slide-content">
+                    <h2><span class="step-num">2</span> NameError</h2>
+                    <p>Biến chưa khai báo hoặc viết sai tên</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Sai tên hàm</span>
+<span class="function">pirnt</span>(<span class="string">"Hello"</span>)
+<span class="error-msg">NameError: name 'pirnt' is not defined</span>
+
+<span class="comment"># Dùng biến chưa gán</span>
+<span class="function">print</span>(ket_qua)
+<span class="error-msg">NameError: name 'ket_qua' is not defined</span>
+
+<span class="comment"># Biến chỉ có trong hàm</span>
+<span class="keyword">def</span> <span class="function">tinh</span>():
+    x = <span class="number">10</span>
+<span class="function">print</span>(x)  <span class="comment"># x không tồn tại ở đây</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Đúng tên hàm</span>
+<span class="function">print</span>(<span class="string">"Hello"</span>)
+
+
+<span class="comment"># Khai báo trước khi dùng</span>
+ket_qua = <span class="number">42</span>
+<span class="function">print</span>(ket_qua)
+
+<span class="comment"># Dùng return</span>
+<span class="keyword">def</span> <span class="function">tinh</span>():
+    x = <span class="number">10</span>
+    <span class="keyword">return</span> x
+<span class="function">print</span>(<span class="function">tinh</span>())</div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 3</div>
+                </div>
+            </div>
+
+            <!-- Slide 6: TypeError -->
+            <div class="slide" data-slide="6">
+                <div class="slide-content">
+                    <h2><span class="step-num">3</span> TypeError</h2>
+                    <p>Sai kiểu dữ liệu - không thể thao tác giữa các kiểu khác nhau</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Cộng string với int</span>
+tuoi = <span class="number">20</span>
+<span class="function">print</span>(<span class="string">"Tuổi: "</span> + tuoi)
+<span class="error-msg">TypeError: can only concatenate str to str</span>
+
+<span class="comment"># Gọi 1 số như hàm</span>
+x = <span class="number">5</span>
+x(<span class="number">3</span>)
+<span class="error-msg">TypeError: 'int' is not callable</span>
+
+<span class="comment"># Truyền sai số lượng tham số</span>
+<span class="keyword">def</span> <span class="function">cong</span>(a, b):
+    <span class="keyword">return</span> a + b
+<span class="function">cong</span>(<span class="number">1</span>)
+<span class="error-msg">TypeError: missing 1 required argument</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Dùng f-string hoặc str()</span>
+tuoi = <span class="number">20</span>
+<span class="function">print</span>(<span class="string">f"Tuổi: <span class="fix">{tuoi}</span>"</span>)
+
+
+<span class="comment"># Không đặt trùng tên biến với hàm</span>
+x = <span class="number">5</span>
+y = x * <span class="number">3</span>  <span class="comment"># nhân, không phải gọi</span>
+
+
+<span class="comment"># Truyền đủ tham số</span>
+<span class="keyword">def</span> <span class="function">cong</span>(a, b):
+    <span class="keyword">return</span> a + b
+<span class="function">cong</span>(<span class="number">1</span>, <span class="fix"><span class="number">2</span></span>)</div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 4</div>
+                </div>
+            </div>
+
+            <!-- Slide 7: IndexError -->
+            <div class="slide" data-slide="7">
+                <div class="slide-content">
+                    <h2><span class="step-num">4</span> IndexError</h2>
+                    <p>Truy cập phần tử ngoài phạm vi của list/array</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># List có 3 phần tử, index 0-2</span>
+ds = [<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>]
+<span class="function">print</span>(ds[<span class="number">3</span>])
+<span class="error-msg">IndexError: list index out of range</span>
+
+<span class="comment"># Vòng lặp vượt quá độ dài</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(ds) + <span class="number">1</span>):
+    <span class="function">print</span>(ds[i])  <span class="comment"># lỗi khi i = 3</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Dùng index hợp lệ (0 đến len-1)</span>
+ds = [<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>]
+<span class="function">print</span>(ds[<span class="fix"><span class="number">2</span></span>])   <span class="comment"># index cuối = len - 1</span>
+<span class="function">print</span>(ds[<span class="fix"><span class="number">-1</span></span>])  <span class="comment"># hoặc dùng index âm</span>
+
+<span class="comment"># Dùng range(len(ds)) không +1</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(ds)):
+    <span class="function">print</span>(ds[i])
+
+<span class="comment"># Hoặc tốt hơn: dùng for-in</span>
+<span class="keyword">for</span> val <span class="keyword">in</span> ds:
+    <span class="function">print</span>(val)</div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 5</div>
+                </div>
+            </div>
+
+            <!-- Slide 8: ValueError -->
+            <div class="slide" data-slide="8">
+                <div class="slide-content">
+                    <h2><span class="step-num">5</span> ValueError</h2>
+                    <p>Giá trị không hợp lệ cho phép toán/hàm</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Chuyển chuỗi thành số</span>
+<span class="function">int</span>(<span class="string">"abc"</span>)
+<span class="error-msg">ValueError: invalid literal for int()</span>
+
+<span class="comment"># Căn bậc 2 số âm (math)</span>
+<span class="keyword">import</span> <span class="module">math</span>
+<span class="module">math</span>.<span class="function">sqrt</span>(-<span class="number">1</span>)
+<span class="error-msg">ValueError: math domain error</span>
+
+<span class="comment"># Unpack sai số lượng</span>
+a, b = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]
+<span class="error-msg">ValueError: too many values to unpack</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Kiểm tra trước khi convert</span>
+s = <span class="string">"abc"</span>
+<span class="keyword">if</span> s.<span class="function">isdigit</span>():
+    <span class="function">int</span>(s)
+
+<span class="comment"># Dùng numpy cho số âm</span>
+<span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+<span class="module">np</span>.<span class="function">sqrt</span>(-<span class="number">1</span>)  <span class="comment"># trả về nan</span>
+
+<span class="comment"># Unpack đúng số lượng</span>
+a, b<span class="fix">, c</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]</div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 6</div>
+                </div>
+            </div>
+
+            <!-- Slide 9: KeyError -->
+            <div class="slide" data-slide="9">
+                <div class="slide-content">
+                    <h2><span class="step-num">6</span> KeyError</h2>
+                    <p>Key không tồn tại trong dictionary</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Dict không có key</span>
+sv = {<span class="string">"ten"</span>: <span class="string">"An"</span>, <span class="string">"tuoi"</span>: <span class="number">20</span>}
+<span class="function">print</span>(sv[<span class="string">"diem"</span>])
+<span class="error-msg">KeyError: 'diem'</span>
+
+<span class="comment"># Sai tên key (hoa/thường)</span>
+<span class="function">print</span>(sv[<span class="string">"Ten"</span>])  <span class="comment"># "Ten" != "ten"</span>
+<span class="error-msg">KeyError: 'Ten'</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Dùng .get() (trả về None nếu ko có)</span>
+sv = {<span class="string">"ten"</span>: <span class="string">"An"</span>, <span class="string">"tuoi"</span>: <span class="number">20</span>}
+<span class="function">print</span>(sv.<span class="function">get</span>(<span class="string">"diem"</span>, <span class="string">"Chưa có"</span>))
+
+<span class="comment"># Kiểm tra key trước</span>
+<span class="keyword">if</span> <span class="string">"diem"</span> <span class="keyword">in</span> sv:
+    <span class="function">print</span>(sv[<span class="string">"diem"</span>])
+
+<span class="comment"># Chú ý hoa/thường</span>
+<span class="function">print</span>(sv[<span class="string">"ten"</span>])  <span class="comment"># đúng!</span></div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 7</div>
+                </div>
+            </div>
+
+            <!-- Slide 10: ImportError -->
+            <div class="slide" data-slide="10">
+                <div class="slide-content">
+                    <h2><span class="step-num">7</span> ImportError / ModuleNotFoundError</h2>
+                    <p>Module không tìm thấy hoặc chưa cài đặt</p>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Lỗi</div>
+                            <div class="code-block"><span class="comment"># Sai tên module</span>
+<span class="keyword">import</span> <span class="module">numpyy</span>
+<span class="error-msg">ModuleNotFoundError: No module named 'numpyy'</span>
+
+<span class="comment"># Import hàm không tồn tại</span>
+<span class="keyword">from</span> <span class="module">math</span> <span class="keyword">import</span> <span class="function">square_root</span>
+<span class="error-msg">ImportError: cannot import name 'square_root'</span>
+
+<span class="comment"># Module chưa cài</span>
+<span class="keyword">import</span> <span class="module">seaborn</span>
+<span class="error-msg">ModuleNotFoundError: No module named 'seaborn'</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Sửa</div>
+                            <div class="code-block"><span class="comment"># Đúng tên module</span>
+<span class="keyword">import</span> <span class="module">numpy</span>
+
+
+<span class="comment"># Đúng tên hàm (math.sqrt)</span>
+<span class="keyword">from</span> <span class="module">math</span> <span class="keyword">import</span> <span class="function">sqrt</span>
+
+
+<span class="comment"># Cài đặt trước khi import</span>
+<span class="comment"># Trong terminal:</span>
+<span class="fix">pip install seaborn</span>
+<span class="comment"># Hoặc trong Jupyter/Colab:</span>
+<span class="fix">!pip install seaborn</span></div>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 8</div>
+                </div>
+            </div>
+
+            <!-- Slide 11: Lỗi NumPy -->
+            <div class="slide" data-slide="11">
+                <div class="slide-content">
+                    <p class="section-divider">Lỗi thư viện</p>
+                    <h2>Lỗi thường gặp với NumPy</h2>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Các lỗi NumPy</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="comment"># 1. Shape mismatch (ValueError)</span>
+a = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+b = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">2</span>])
+a + b
+<span class="error-msg">ValueError: operands could not be broadcast
+  together with shapes (3,) and (2,)</span>
+
+<span class="comment"># 2. LinAlgError (ma trận suy biến)</span>
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">1</span>,<span class="number">2</span>],[<span class="number">2</span>,<span class="number">4</span>]])
+<span class="module">np</span>.linalg.<span class="function">inv</span>(A)
+<span class="error-msg">LinAlgError: Singular matrix</span>
+
+<span class="comment"># 3. AxisError</span>
+c = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>])
+<span class="module">np</span>.<span class="function">sum</span>(c, axis=<span class="number">1</span>)
+<span class="error-msg">AxisError: axis 1 is out of bounds
+  for array of dimension 1</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Cách sửa</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="comment"># 1. Kiểm tra shape trước</span>
+a = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+b = <span class="module">np</span>.<span class="function">array</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])  <span class="comment"># cùng shape</span>
+<span class="function">print</span>(a.shape, b.shape)  <span class="comment"># debug</span>
+a + b
+
+<span class="comment"># 2. Kiểm tra det != 0</span>
+A = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">1</span>,<span class="number">2</span>],[<span class="number">3</span>,<span class="number">4</span>]])
+<span class="function">print</span>(<span class="module">np</span>.linalg.<span class="function">det</span>(A)) <span class="comment"># != 0</span>
+<span class="module">np</span>.linalg.<span class="function">inv</span>(A)
+
+<span class="comment"># 3. Kiểm tra ndim trước</span>
+c = <span class="module">np</span>.<span class="function">array</span>([[<span class="number">1</span>,<span class="number">2</span>],[<span class="number">3</span>,<span class="number">4</span>]])
+<span class="function">print</span>(c.ndim)  <span class="comment"># 2 -&gt; axis=1 ok</span>
+<span class="module">np</span>.<span class="function">sum</span>(c, axis=<span class="number">1</span>)</div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <strong>Mẹo:</strong> Luôn dùng <code>.shape</code> và <code>.ndim</code> để kiểm tra trước khi tính toán với NumPy!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 9</div>
+                </div>
+            </div>
+
+            <!-- Slide 12: Lỗi Pandas -->
+            <div class="slide" data-slide="12">
+                <div class="slide-content">
+                    <h2>Lỗi thường gặp với Pandas</h2>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Các lỗi Pandas</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">pandas</span> <span class="keyword">as</span> <span class="module">pd</span>
+df = <span class="module">pd</span>.<span class="function">read_csv</span>(<span class="string">'diem.csv'</span>)
+
+<span class="comment"># 1. KeyError - sai tên cột</span>
+df[<span class="string">'toan'</span>]  <span class="comment"># cột tên 'Toan' (hoa T)</span>
+<span class="error-msg">KeyError: 'toan'</span>
+
+<span class="comment"># 2. FileNotFoundError</span>
+<span class="module">pd</span>.<span class="function">read_csv</span>(<span class="string">'sai_ten.csv'</span>)
+<span class="error-msg">FileNotFoundError: [Errno 2]
+  No such file or directory: 'sai_ten.csv'</span>
+
+<span class="comment"># 3. SettingWithCopyWarning</span>
+df2 = df[df[<span class="string">'Toan'</span>] > <span class="number">5</span>]
+df2[<span class="string">'XepLoai'</span>] = <span class="string">'Dat'</span>
+<span class="error-msg">SettingWithCopyWarning: A value is
+  trying to be set on a copy of a slice</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Cách sửa</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">pandas</span> <span class="keyword">as</span> <span class="module">pd</span>
+df = <span class="module">pd</span>.<span class="function">read_csv</span>(<span class="string">'diem.csv'</span>)
+
+<span class="comment"># 1. Kiểm tra tên cột</span>
+<span class="function">print</span>(df.columns.<span class="function">tolist</span>())
+df[<span class="string">'Toan'</span>]  <span class="comment"># đúng tên chính xác</span>
+
+
+<span class="comment"># 2. Kiểm tra đường dẫn</span>
+<span class="keyword">import</span> <span class="module">os</span>
+<span class="function">print</span>(<span class="module">os</span>.<span class="function">listdir</span>(<span class="string">'.'</span>))  <span class="comment"># xem file</span>
+<span class="module">pd</span>.<span class="function">read_csv</span>(<span class="string">'diem_sinh_vien.csv'</span>)
+
+<span class="comment"># 3. Dùng .copy() hoặc .loc</span>
+df2 = df[df[<span class="string">'Toan'</span>] > <span class="number">5</span>]<span class="fix">.copy()</span>
+df2[<span class="string">'XepLoai'</span>] = <span class="string">'Dat'</span>
+<span class="comment"># Hoặc:</span>
+df.<span class="function">loc</span>[df[<span class="string">'Toan'</span>]><span class="number">5</span>, <span class="string">'XepLoai'</span>] = <span class="string">'Dat'</span></div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <strong>Mẹo:</strong> Dùng <code>df.columns</code>, <code>df.dtypes</code>, <code>df.head()</code> để kiểm tra trước khi thao tác!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 10</div>
+                </div>
+            </div>
+
+            <!-- Slide 13: Lỗi Matplotlib -->
+            <div class="slide" data-slide="13">
+                <div class="slide-content">
+                    <h2>Lỗi thường gặp với Matplotlib</h2>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Các lỗi Matplotlib</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">matplotlib.pyplot</span> <span class="keyword">as</span> <span class="module">plt</span>
+
+<span class="comment"># 1. x và y khác độ dài</span>
+x = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]
+y = [<span class="number">10</span>, <span class="number">20</span>]
+<span class="module">plt</span>.<span class="function">plot</span>(x, y)
+<span class="error-msg">ValueError: x and y must have same
+  first dimension</span>
+
+<span class="comment"># 2. Không hiện hình (script)</span>
+<span class="module">plt</span>.<span class="function">plot</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>])
+<span class="comment"># Không thấy gì cả...</span>
+
+<span class="comment"># 3. Sai kiểu dữ liệu</span>
+<span class="module">plt</span>.<span class="function">bar</span>([<span class="string">'A'</span>,<span class="string">'B'</span>], <span class="string">"hello"</span>)
+<span class="error-msg">TypeError: only size-1 arrays can be
+  converted to Python scalars</span></div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Cách sửa</div>
+                            <div class="code-block"><span class="keyword">import</span> <span class="module">matplotlib.pyplot</span> <span class="keyword">as</span> <span class="module">plt</span>
+
+<span class="comment"># 1. Đảm bảo cùng độ dài</span>
+x = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]
+y = [<span class="number">10</span>, <span class="number">20</span>, <span class="fix"><span class="number">30</span></span>]
+<span class="function">print</span>(<span class="function">len</span>(x), <span class="function">len</span>(y))  <span class="comment"># debug</span>
+<span class="module">plt</span>.<span class="function">plot</span>(x, y)
+
+<span class="comment"># 2. Thêm plt.show() hoặc %matplotlib</span>
+<span class="module">plt</span>.<span class="function">plot</span>([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>])
+<span class="fix"><span class="module">plt</span>.<span class="function">show</span>()</span>
+<span class="comment"># Trong Jupyter: %matplotlib inline</span>
+
+<span class="comment"># 3. Truyền đúng kiểu (list số)</span>
+<span class="module">plt</span>.<span class="function">bar</span>([<span class="string">'A'</span>,<span class="string">'B'</span>], <span class="fix">[<span class="number">10</span>, <span class="number">20</span>]</span>)</div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <strong>Mẹo:</strong> Luôn <code>print(len(x), len(y))</code> trước khi <code>plt.plot(x, y)</code> và nhớ gọi <code>plt.show()</code>!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 11</div>
+                </div>
+            </div>
+
+            <!-- Slide 14: Print debugging -->
+            <div class="slide" data-slide="14">
+                <div class="slide-content">
+                    <p class="section-divider">Kỹ thuật Debug</p>
+                    <h2>Print Debugging</h2>
+                    <p>Kỹ thuật đơn giản nhất: dùng <code>print()</code> để "nhìn thấy" giá trị của biến</p>
+                    <div class="code-block"><span class="comment"># Hàm tính trung bình - KẾT QUẢ SAI, tại sao?</span>
+<span class="keyword">def</span> <span class="function">trung_binh</span>(ds):
+    tong = <span class="number">0</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(ds)):   <span class="comment"># BUG: bắt đầu từ 1, bỏ qua ds[0]</span>
+        tong += ds[i]
+        <span class="fix"><span class="function">print</span>(<span class="string">f"i={i}, ds[i]={ds[i]}, tong={tong}"</span>)</span>  <span class="comment"># &larr; THÊM DÒNG NÀY</span>
+    tb = tong / <span class="function">len</span>(ds)
+    <span class="fix"><span class="function">print</span>(<span class="string">f"tong={tong}, len={<span class="function">len</span>(ds)}, tb={tb}"</span>)</span>   <span class="comment"># &larr; VÀ DÒNG NÀY</span>
+    <span class="keyword">return</span> tb
+
+<span class="function">print</span>(<span class="function">trung_binh</span>([<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>]))
+<span class="comment"># Output:
+# i=1, ds[i]=20, tong=20      &larr; Thiếu ds[0]=10!
+# i=2, ds[i]=30, tong=50
+# tong=50, len=3, tb=16.67    &larr; Đúng ra phải là 20.0
+# =&gt; Bug: range(1,...) bỏ qua phần tử đầu tiên!</span></div>
+                    <div class="info-box success">
+                        <strong>Tip:</strong> Sau khi fix xong, <strong>xóa các dòng print debug</strong> để code sạch!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 12</div>
+                </div>
+            </div>
+
+            <!-- Slide 15: Try-Except -->
+            <div class="slide" data-slide="15">
+                <div class="slide-content">
+                    <h2>Try - Except</h2>
+                    <p>Bắt lỗi có kiểm soát - không để chương trình crash</p>
+                    <div class="compare-container">
+                        <div class="compare-box">
+                            <h3 style="color: #e74c3c;">Không bắt lỗi</h3>
+                            <div class="code-block"><span class="comment"># Chương trình crash ngay!</span>
+so = <span class="function">input</span>(<span class="string">"Nhập số: "</span>)
+kq = <span class="number">100</span> / <span class="function">int</span>(so)
+<span class="function">print</span>(kq)
+
+<span class="comment"># Nhập "abc" &rarr; CRASH!
+# Nhập "0"   &rarr; CRASH!</span></div>
+                        </div>
+                        <div class="compare-box">
+                            <h3 style="color: #2ecc71;">Có bắt lỗi</h3>
+                            <div class="code-block"><span class="keyword">try</span>:
+    so = <span class="function">input</span>(<span class="string">"Nhập số: "</span>)
+    kq = <span class="number">100</span> / <span class="function">int</span>(so)
+    <span class="function">print</span>(kq)
+<span class="keyword">except</span> <span class="module">ValueError</span>:
+    <span class="function">print</span>(<span class="string">"Vui lòng nhập số!"</span>)
+<span class="keyword">except</span> <span class="module">ZeroDivisionError</span>:
+    <span class="function">print</span>(<span class="string">"Không thể chia cho 0!"</span>)</div>
+                        </div>
+                    </div>
+                    <div class="code-block"><span class="comment"># Mẫu try-except đầy đủ</span>
+<span class="keyword">try</span>:
+    <span class="comment"># Code có thể lỗi</span>
+    ket_qua = thao_tac_nguy_hiem()
+<span class="keyword">except</span> <span class="module">LoaiLoi1</span> <span class="keyword">as</span> e:
+    <span class="function">print</span>(<span class="string">f"Lỗi 1: {e}"</span>)        <span class="comment"># Xử lý lỗi cụ thể</span>
+<span class="keyword">except</span> <span class="module">Exception</span> <span class="keyword">as</span> e:
+    <span class="function">print</span>(<span class="string">f"Lỗi chung: {e}"</span>)    <span class="comment"># Bắt mọi lỗi còn lại</span>
+<span class="keyword">finally</span>:
+    <span class="function">print</span>(<span class="string">"Luôn chạy dòng này"</span>)  <span class="comment"># Dọn dẹp, đóng file, ...</span></div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 13</div>
+                </div>
+            </div>
+
+            <!-- Slide 16: Debug trong Jupyter -->
+            <div class="slide" data-slide="16">
+                <div class="slide-content">
+                    <h2>Debug trong Jupyter Notebook</h2>
+                    <div class="compare-container">
+                        <div class="compare-box">
+                            <h3>Kỹ thuật 1: Chạy từng cell</h3>
+                            <ul>
+                                <li>Chia code thành nhiều cell nhỏ</li>
+                                <li>Chạy từng cell để tìm cell bị lỗi</li>
+                                <li>Xem giá trị biến ở cuối mỗi cell</li>
+                            </ul>
+                            <div class="code-block"><span class="comment"># Cell 1: Tạo dữ liệu</span>
+data = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]
+data  <span class="comment"># Jupyter tự in ra</span></div>
+                            <div class="code-block"><span class="comment"># Cell 2: Xử lý</span>
+total = <span class="function">sum</span>(data)
+total  <span class="comment"># Kiểm tra</span></div>
+                        </div>
+                        <div class="compare-box">
+                            <h3>Kỹ thuật 2: Magic commands</h3>
+                            <div class="code-block"><span class="comment"># Xem traceback chi tiết</span>
+<span class="fix">%tb</span>
+
+<span class="comment"># Mở debugger sau khi lỗi</span>
+<span class="fix">%debug</span>
+
+<span class="comment"># Tự động debug khi có lỗi</span>
+<span class="fix">%pdb on</span>
+
+<span class="comment"># Đo thời gian chạy</span>
+<span class="fix">%time</span> <span class="module">np</span>.<span class="function">sum</span>(big_array)
+<span class="fix">%%timeit</span>
+<span class="module">np</span>.<span class="function">sum</span>(big_array)</div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <strong>Tip:</strong> Trong Jupyter, gọi <code>tên_biến?</code> để xem thông tin, <code>tên_hàm??</code> để xem source code!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 14</div>
+                </div>
+            </div>
+
+            <!-- Slide 17: Tại sao đọc code? -->
+            <div class="slide" data-slide="17">
+                <div class="slide-content">
+                    <p class="section-divider">Đọc Code</p>
+                    <h2>Tại sao cần đọc code người khác?</h2>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center;">
+                            <h3>Trong học tập</h3>
+                            <ul>
+                                <li>Học cách người giỏi viết code</li>
+                                <li>Hiểu bài tập mẫu / code giảng viên</li>
+                                <li>Đọc code trên Stack Overflow, GitHub</li>
+                            </ul>
+                        </div>
+                        <div class="compare-box" style="text-align: center;">
+                            <h3>Trong nghiên cứu</h3>
+                            <ul>
+                                <li>Reproduce kết quả bài báo</li>
+                                <li>Tiếp tục project người khác</li>
+                                <li>Review code đồng nghiệp</li>
+                            </ul>
+                        </div>
+                        <div class="compare-box" style="text-align: center;">
+                            <h3>Trong công việc</h3>
+                            <ul>
+                                <li>Join dự án có sẵn</li>
+                                <li>Debug code không phải mình viết</li>
+                                <li>Học thư viện / framework mới</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Thực tế:</strong> Lập trình viên đọc code <strong>nhiều hơn</strong> viết code. Tỉ lệ trung bình: đọc 10 dòng, viết 1 dòng!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 18: Chiến lược đọc code -->
+            <div class="slide" data-slide="18">
+                <div class="slide-content">
+                    <h2>Chiến lược đọc code hiệu quả</h2>
+                    <div class="flow-container">
+                        <div class="flow-step" style="background: #e74c3c;">Bước 1<br><small>Đọc README / comment</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step" style="background: #f39c12;">Bước 2<br><small>Tìm input / output</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step" style="background: #2ecc71;">Bước 3<br><small>Theo luồng chính</small></div>
+                        <div class="flow-arrow">&rarr;</div>
+                        <div class="flow-step" style="background: #3498db;">Bước 4<br><small>Đọc chi tiết từng hàm</small></div>
+                    </div>
+                    <div class="code-block"><span class="comment"># THỬ ĐỌC ĐOẠN CODE NÀY - đoán output trước khi chạy!</span>
+
+<span class="keyword">def</span> <span class="function">bi_an</span>(n):
+    <span class="keyword">if</span> n <= <span class="number">1</span>:
+        <span class="keyword">return</span> n
+    <span class="keyword">return</span> <span class="function">bi_an</span>(n - <span class="number">1</span>) + <span class="function">bi_an</span>(n - <span class="number">2</span>)
+
+ket_qua = [<span class="function">bi_an</span>(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">8</span>)]
+<span class="function">print</span>(ket_qua)
+
+<span class="comment"># Gợi ý: Thử chạy tay với n = 0, 1, 2, 3, 4
+# bi_an(0) = ?    bi_an(1) = ?
+# bi_an(2) = bi_an(1) + bi_an(0) = ?
+# ...
+# Dãy này là gì? 🤔</span></div>
+                    <div class="info-box">
+                        <strong>Tip:</strong> Khi đọc code, đừng viết ra giấy! Kẻ bảng giá trị của biến qua từng bước (trace table).
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 15</div>
+                </div>
+            </div>
+
+            <!-- Slide 19: AI tools -->
+            <div class="slide" data-slide="19">
+                <div class="slide-content">
+                    <p class="section-divider">AI Hỗ Trợ</p>
+                    <h2>AI Tools cho lập trình</h2>
+                    <table>
+                        <tr><th>Tool</th><th>Miễn phí?</th><th>Điểm mạnh</th><th>Dùng khi</th></tr>
+                        <tr>
+                            <td><strong>ChatGPT</strong></td>
+                            <td>Có (giới hạn)</td>
+                            <td>Đa dụng, phổ biến</td>
+                            <td>Hỏi chung, giải thích code</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Claude</strong></td>
+                            <td>Có (giới hạn)</td>
+                            <td>Chính xác, phân tích dài</td>
+                            <td>Debug, đọc code phức tạp</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GitHub Copilot</strong></td>
+                            <td>Miễn phí (SV)</td>
+                            <td>Gợi ý code real-time</td>
+                            <td>Viết code trong VS Code</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Google Gemini</strong></td>
+                            <td>Có</td>
+                            <td>Tích hợp Google</td>
+                            <td>Tìm kiếm + code</td>
+                        </tr>
+                    </table>
+                    <div class="info-box warning">
+                        <strong>Lưu ý quan trọng:</strong> AI có thể <strong>sai</strong>! Luôn kiểm tra kết quả của AI trước khi dùng. AI là <strong>trợ lý</strong>, không phải <strong>thay thế</strong> việc hiểu code.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 20: Prompt hiệu quả -->
+            <div class="slide" data-slide="20">
+                <div class="slide-content">
+                    <h2>Cách dùng AI hiệu quả</h2>
+                    <div class="error-fix-pair">
+                        <div class="error-box">
+                            <div class="box-label">&#10060; Prompt xấu</div>
+                            <div class="prompt-box" style="border-color: #e74c3c;">
+                                <div class="prompt-label" style="color: #e74c3c;">User</div>
+                                <div class="prompt-text">"Code bị lỗi, sửa giùm"</div>
+                            </div>
+                            <div class="prompt-box" style="border-color: #e74c3c;">
+                                <div class="prompt-label" style="color: #e74c3c;">User</div>
+                                <div class="prompt-text">"Làm bài tập số 5 cho tôi"</div>
+                            </div>
+                        </div>
+                        <div class="fix-box">
+                            <div class="box-label">&#9989; Prompt tốt</div>
+                            <div class="prompt-box" style="border-color: #2ecc71;">
+                                <div class="prompt-label" style="color: #2ecc71;">User</div>
+                                <div class="prompt-text">"Tôi có đoạn code Python sau:
+[paste code]
+Khi chạy, tôi gặp lỗi:
+[paste traceback]
+Hãy giải thích lỗi này và gợi ý
+cách sửa."</div>
+                            </div>
+                            <div class="prompt-box" style="border-color: #2ecc71;">
+                                <div class="prompt-label" style="color: #2ecc71;">User</div>
+                                <div class="prompt-text">"Giải thích đoạn code sau làm gì,
+từng dòng một:
+[paste code]"</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Công thức prompt debug:</strong> Code + Lỗi + Mục tiêu = Kết quả tốt
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 16</div>
+                </div>
+            </div>
+
+            <!-- Slide 21: Demo AI debug -->
+            <div class="slide" data-slide="21">
+                <div class="slide-content">
+                    <h2>Demo: AI giải thích lỗi</h2>
+                    <div class="prompt-box">
+                        <div class="prompt-label">Prompt gửi cho AI</div>
+                        <div class="prompt-text">Tôi có đoạn code Python:
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 10, 50)
+y = np.sin(x)
+z = np.cos(x)
+
+plt.plot(x, y, z)
+plt.title("Sin và Cos")
+plt.show()
+
+Khi chạy, đồ thị không đúng như mong đợi.
+Thay vì 2 đường sin và cos, chỉ thấy 1
+đường lạ. Giải thích và sửa giùm.</div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>AI sẽ giải thích:</strong> <code>plt.plot(x, y, z)</code> hiểu <code>z</code> là format string, không phải dữ liệu thứ 2. Sửa: gọi <code>plt.plot()</code> 2 lần riêng biệt.
+                    </div>
+                    <div class="code-block"><span class="comment"># Code đã sửa (theo gợi ý AI)</span>
+<span class="module">plt</span>.<span class="function">plot</span>(x, y, <span class="keyword">label</span>=<span class="string">'sin(x)'</span>)
+<span class="module">plt</span>.<span class="function">plot</span>(x, z, <span class="keyword">label</span>=<span class="string">'cos(x)'</span>)
+<span class="module">plt</span>.<span class="function">legend</span>()
+<span class="module">plt</span>.<span class="function">title</span>(<span class="string">"Sin và Cos"</span>)
+<span class="module">plt</span>.<span class="function">show</span>()</div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 17</div>
+                </div>
+            </div>
+
+            <!-- Slide 22: Bài tập tìm 5 lỗi -->
+            <div class="slide" data-slide="22">
+                <div class="slide-content">
+                    <p class="section-divider">Thực hành</p>
+                    <h2>Bài tập: Tìm và sửa 5 lỗi!</h2>
+                    <p>Đoạn code dưới đây vẽ biểu đồ điểm sinh viên nhưng có <strong>5 lỗi</strong>. Tìm và sửa hết!</p>
+                    <div class="code-block"><span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+<span class="keyword">import</span> <span class="module">matplotlib.pyplt</span> <span class="keyword">as</span> <span class="module">plt</span>            <span class="comment"># 🔍 Lỗi 1: ???</span>
+<span class="keyword">import</span> <span class="module">pandas</span> <span class="keyword">as</span> <span class="module">pd</span>
+
+df = pd.<span class="function">read_csv</span>(<span class="string">'diem_sinh_vien.csv'</span>)
+
+<span class="comment"># Vẽ histogram điểm Toán</span>
+plt.<span class="function">figure</span>(figsize=(<span class="number">10</span>, <span class="number">6</span>))
+plt.<span class="function">hist</span>(df[<span class="string">'toan'</span>], bins=<span class="number">10</span>)              <span class="comment"># 🔍 Lỗi 2: ???</span>
+plt.<span class="function">title</span>(<span class="string">'Phân phối điểm Toán'</span>)
+
+<span class="comment"># Vẽ scatter Toán vs Lý</span>
+x = df[<span class="string">'Toan'</span>].<span class="function">values</span>
+y = df[<span class="string">'Ly'</span>].<span class="function">values</span>
+colors = df[<span class="string">'Hoa'</span>].<span class="function">values</span>
+
+plt.<span class="function">figure</span>(figsize=(<span class="number">8</span>, <span class="number">6</span>))
+plt.<span class="function">scatter</span>(x, y, c=colors)
+plt.<span class="function">xlabel</span>(<span class="string">'Toán'</span>)
+plt.<span class="function">ylabel</span>(<span class="string">'Lý'</span>)
+plt.<span class="function">title</span>(<span class="string">'Tương quan Toán - Lý'</span>)
+
+<span class="comment"># Tính trung bình và in</span>
+mon = [<span class="string">'Toan'</span>, <span class="string">'Ly'</span>, <span class="string">'Hoa'</span>, <span class="string">'Anh'</span>]
+<span class="keyword">for</span> m <span class="keyword">in</span> mon
+    tb = df[m].<span class="function">mean</span>()                      <span class="comment"># 🔍 Lỗi 3: ???</span>
+    <span class="function">print</span>(<span class="string">"TB "</span> + m + <span class="string">": "</span> + tb)             <span class="comment"># 🔍 Lỗi 4: ???</span>
+
+<span class="comment"># Vẽ bar chart trung bình</span>
+tb_list = [df[m].<span class="function">mean</span>() <span class="keyword">for</span> m <span class="keyword">in</span> mon]
+plt.<span class="function">figure</span>(figsize=(<span class="number">8</span>, <span class="number">5</span>))
+plt.<span class="function">bar</span>(mon, tb_list)
+plt.<span class="function">title</span>(<span class="string">'Điểm trung bình các môn'</span>)
+plt.<span class="function">savefig</span>                                  <span class="comment"># 🔍 Lỗi 5: ???</span>
+plt.<span class="function">show</span>()</div>
+                    <div class="info-box warning">
+                        <strong>Gợi ý các loại lỗi:</strong> ImportError, KeyError, SyntaxError, TypeError, và 1 lỗi gọi hàm sai. Dùng kỹ thuật debug đã học để tìm!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 18 (có code chạy được)</div>
+                </div>
+            </div>
+
+            <!-- Slide 23: Output & BTVN -->
+            <div class="slide" data-slide="23">
+                <div class="slide-content">
+                    <h2>Output buổi học</h2>
+                    <div class="checklist">
+                        <div class="checklist-item">Biết đọc thông báo lỗi Python (traceback)</div>
+                        <div class="checklist-item">Nhận diện 7 loại lỗi cơ bản + lỗi thư viện</div>
+                        <div class="checklist-item">Biết dùng print(), try-except để debug</div>
+                        <div class="checklist-item">Có chiến lược đọc code người khác</div>
+                        <div class="checklist-item">Biết dùng AI hỗ trợ debug và đọc code</div>
+                    </div>
+                    <h3>Bài tập về nhà</h3>
+                    <ol>
+                        <li>Tìm 1 đoạn code Python trên GitHub (liên quan toán học)</li>
+                        <li>Đọc hiểu và giải thích bằng comment (viết bằng tiếng Việt)</li>
+                        <li>Thử dùng AI (ChatGPT/Claude) để hỏi về đoạn code đó</li>
+                        <li>Nộp: link GitHub + file code có comment</li>
+                    </ol>
+                    <div class="info-box success">
+                        <strong>Tuần sau:</strong> Đại số tuyến tính qua code - "Ma trận không chỉ ở trong phim"
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&#8592;</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">&#8594;</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 24;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.remove('active', 'prev');
+                if (i === currentSlide) s.classList.add('active');
+                else if (i < currentSlide) s.classList.add('prev');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', parseInt(item.dataset.slide) === currentSlide);
+            });
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('progressFill').style.width = ((currentSlide / (totalSlides - 1)) * 100) + '%';
+        }
+
+        function nextSlide() { if (currentSlide < totalSlides - 1) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentSlide = parseInt(item.dataset.slide);
+                updateSlide();
+                document.getElementById('sidebar').classList.remove('open');
+            });
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        updateSlide();
+    </script>
+</body>
+</html>
