@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuần 7: Tối ưu hóa - GD, GA & PSO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        .container { display: flex; height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar h2 { color: #667eea; margin-bottom: 20px; font-size: 18px; }
+        .nav-section { margin-bottom: 20px; }
+        .nav-section h3 {
+            font-size: 14px; color: #7f8c8d; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 15px; margin: 5px 0; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease; font-size: 14px;
+            color: #555; border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: #f0f4ff; border-left-color: #667eea; }
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-left-color: #764ba2;
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; position: relative; overflow: hidden; }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; padding: 30px 60px; opacity: 0;
+            transform: translateX(100%); transition: all 0.5s ease; background: white;
+            overflow-y: auto;
+        }
+        .slide.active { opacity: 1; transform: translateX(0); z-index: 1; }
+        .slide.prev { transform: translateX(-100%); }
+
+        .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+
+        h1 {
+            font-size: 48px; margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        h2 { font-size: 32px; color: #2c3e50; margin-bottom: 15px; }
+        h3 { font-size: 24px; color: #667eea; margin: 15px 0; }
+        p { font-size: 18px; line-height: 1.6; color: #555; margin: 10px 0; }
+
+        /* Table */
+        table {
+            width: 100%; max-width: 900px; margin: 20px auto;
+            border-collapse: collapse; background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 12px; text-align: left; font-size: 15px;
+        }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e; color: #d4d4d4; padding: 25px; border-radius: 12px;
+            text-align: left; font-family: 'Courier New', monospace; font-size: 16px;
+            line-height: 1.8; max-width: 800px; margin: 20px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); white-space: pre; overflow-x: auto;
+        }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #c586c0; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .module { color: #4ec9b0; }
+
+        /* Info box */
+        .info-box {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px 20px; border-radius: 8px;
+            margin: 15px auto; max-width: 800px; text-align: left; font-size: 15px;
+        }
+        .info-box.warning {
+            background: linear-gradient(135deg, #f5923620 0%, #ff6b6b20 100%);
+            border-left-color: #f59236;
+        }
+        .info-box.success {
+            background: linear-gradient(135deg, #00b89420 0%, #00d4aa20 100%);
+            border-left-color: #00b894;
+        }
+
+        /* Compare layout */
+        .compare-container {
+            display: flex; gap: 20px; justify-content: center;
+            margin: 20px auto; max-width: 1050px; flex-wrap: wrap;
+        }
+        .compare-box {
+            flex: 1; min-width: 300px; background: #f8f9ff; border-radius: 12px;
+            padding: 20px; text-align: left;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Notebook badge */
+        .notebook-badge {
+            display: inline-block; margin-top: 15px; padding: 8px 20px;
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: white;
+            border-radius: 25px; font-size: 13px; font-weight: bold;
+        }
+
+        /* Checklist */
+        .checklist { text-align: left; max-width: 600px; margin: 20px auto; }
+        .checklist-item {
+            padding: 12px; margin: 8px 0; background: #f8f9ff;
+            border-left: 4px solid #667eea; border-radius: 8px; font-size: 15px;
+        }
+        .checklist-item::before { content: "\2713 "; color: #667eea; font-weight: bold; margin-right: 10px; }
+
+        /* Section divider */
+        .section-divider {
+            font-size: 14px; color: #667eea; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 5px;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; font-size: 24px; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .nav-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed; top: 0; left: 280px; right: 0;
+            height: 4px; background: rgba(255, 255, 255, 0.3); z-index: 1000;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile */
+        .sidebar-toggle {
+            display: none; position: fixed; top: 20px; left: 20px;
+            z-index: 2000; width: 40px; height: 40px; background: white;
+            border-radius: 8px; border: none; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed; left: 0; top: 0; bottom: 0;
+                z-index: 1500; transform: translateX(-100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .progress-bar { left: 0; }
+            .slide { padding: 60px 15px 15px; }
+            h1 { font-size: 32px; }
+            h2 { font-size: 24px; }
+            .compare-container { flex-direction: column; }
+        }
+
+        ul, ol {
+            text-align: left; max-width: 800px; margin: 15px auto; padding-left: 30px;
+        }
+        li { font-size: 16px; margin: 8px 0; line-height: 1.6; }
+
+        /* Canvas for visualization */
+        .viz-canvas {
+            display: block; margin: 15px auto; border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: white; border: 2px solid #eee;
+        }
+
+        /* Big formula */
+        .formula-box {
+            background: #fef9e7; border: 2px solid #f39c12; border-radius: 12px;
+            padding: 20px 30px; margin: 20px auto; max-width: 700px;
+            font-size: 22px; font-family: 'Georgia', serif; color: #2c3e50;
+            text-align: center;
+        }
+
+        /* Example cards */
+        .example-cards {
+            display: flex; gap: 15px; justify-content: center;
+            margin: 20px auto; max-width: 1000px; flex-wrap: wrap;
+        }
+        .example-card {
+            flex: 1; min-width: 280px; background: white; border-radius: 12px;
+            padding: 20px; text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid #667eea;
+        }
+        .example-card .icon { font-size: 40px; margin-bottom: 10px; }
+        .example-card h4 { color: #2c3e50; margin-bottom: 8px; font-size: 16px; }
+        .example-card p { font-size: 14px; color: #777; margin: 0; }
+        .example-card .highlight {
+            color: #667eea; font-weight: bold; font-size: 15px;
+            margin-top: 8px; display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <h2>🎯 Tuần 7</h2>
+            <div class="nav-section">
+                <h3>Mở đầu</h3>
+                <div class="nav-item" data-slide="0">Title</div>
+                <div class="nav-item" data-slide="1">Nội dung hôm nay</div>
+            </div>
+            <div class="nav-section">
+                <h3>Khái niệm</h3>
+                <div class="nav-item" data-slide="2">Tối ưu hóa là gì?</div>
+                <div class="nav-item" data-slide="3">Local vs Global min</div>
+            </div>
+            <div class="nav-section">
+                <h3>Gradient Descent</h3>
+                <div class="nav-item" data-slide="4">GD: Ý tưởng</div>
+                <div class="nav-item" data-slide="5">Learning Rate</div>
+                <div class="nav-item" data-slide="6">GD 1 biến: Code tay</div>
+                <div class="nav-item" data-slide="7">GD 2 biến</div>
+                <div class="nav-item" data-slide="8">scipy.optimize</div>
+            </div>
+            <div class="nav-section">
+                <h3>Genetic Algorithm</h3>
+                <div class="nav-item" data-slide="9">Hạn chế của GD</div>
+                <div class="nav-item" data-slide="10">GA: Ý tưởng</div>
+                <div class="nav-item" data-slide="11">GA: 4 bước chi tiết</div>
+                <div class="nav-item" data-slide="12">GA: Code tay</div>
+                <div class="nav-item" data-slide="13">GA: Thư viện DEAP</div>
+            </div>
+            <div class="nav-section">
+                <h3>PSO</h3>
+                <div class="nav-item" data-slide="14">PSO: Ý tưởng</div>
+                <div class="nav-item" data-slide="15">PSO: Công thức</div>
+                <div class="nav-item" data-slide="16">PSO: Code tay</div>
+                <div class="nav-item" data-slide="17">PSO: Thư viện pyswarm</div>
+            </div>
+            <div class="nav-section">
+                <h3>Tổng kết</h3>
+                <div class="nav-item" data-slide="18">So sánh GD vs GA vs PSO</div>
+                <div class="nav-item" data-slide="19">Bài tập 5 nhóm</div>
+                <div class="nav-item" data-slide="20">Output & BTVN</div>
+            </div>
+        </nav>
+
+        <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+
+        <div class="main-content">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+            <!-- Slide 0: Title -->
+            <div class="slide active" data-slide="0">
+                <div class="slide-content">
+                    <p class="section-divider">Tuần 7</p>
+                    <h1>Tối ưu hóa</h1>
+                    <h2 style="margin-top: -5px;">Gradient Descent (GD), Genetic Algorithm (GA)<br>& Particle Swarm Optimization (PSO)</h2>
+                    <p style="font-size: 24px; margin: 25px 0;">"Tìm đáy của hũ - nhiều cách khác nhau"</p>
+                    <p style="font-size: 16px; color: #999; margin-top: 30px;">Kỹ năng NCKH - Toán Tin</p>
+                </div>
+            </div>
+
+            <!-- Slide 1: Nội dung hôm nay -->
+            <div class="slide" data-slide="1">
+                <div class="slide-content">
+                    <h2>Nội dung hôm nay</h2>
+                    <table>
+                        <tr><th>STT</th><th>Nội dung</th><th>Thời gian</th></tr>
+                        <tr><td>1</td><td>Tối ưu hóa là gì? Local vs Global min</td><td>10 phút</td></tr>
+                        <tr><td>2</td><td>Gradient Descent: ý tưởng + code tay</td><td>25 phút</td></tr>
+                        <tr><td>3</td><td>GD 2 biến + scipy.optimize</td><td>15 phút</td></tr>
+                        <tr><td>4</td><td>Genetic Algorithm: ý tưởng + demo</td><td>20 phút</td></tr>
+                        <tr><td>5</td><td>PSO: ý tưởng + demo</td><td>15 phút</td></tr>
+                        <tr><td>6</td><td>So sánh GD vs GA vs PSO</td><td>10 phút</td></tr>
+                        <tr><td>7</td><td>Giao bài tập 5 nhóm</td><td>10 phút</td></tr>
+                    </table>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; tuan7_toiuuhoa_1.ipynb</div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Tối ưu hóa là gì? -->
+            <div class="slide" data-slide="2">
+                <div class="slide-content">
+                    <p class="section-divider">Khái niệm</p>
+                    <h2>Tối ưu hóa là gì?</h2>
+                    <p>Tìm <strong>phương án tốt nhất</strong> trong vô số phương án có thể</p>
+
+                    <div class="example-cards">
+                        <div class="example-card">
+                            <div class="icon">🚚</div>
+                            <h4>Grab giao hàng</h4>
+                            <p>20 khách hàng, 3 xe<br>Mỗi khách có khung giờ nhận</p>
+                            <span class="highlight">Tìm tuyến đường ngắn nhất</span>
+                        </div>
+                        <div class="example-card">
+                            <div class="icon">🏗️</div>
+                            <h4>Kỹ sư thiết kế dầm</h4>
+                            <p>Chịu lực 50 kN<br>Phải đủ bền, không gãy</p>
+                            <span class="highlight">Tìm kích thước tốn ít thép nhất</span>
+                        </div>
+                        <div class="example-card">
+                            <div class="icon">🧪</div>
+                            <h4>Pha trộn bê tông</h4>
+                            <p>6 nguyên liệu, giá khác nhau<br>Phải đạt cường độ ≥ 30 MPa</p>
+                            <span class="highlight">Tìm công thức rẻ nhất</span>
+                        </div>
+                    </div>
+
+                    <div class="formula-box">
+                        Tìm <strong>x</strong> sao cho <strong>f(x)</strong> nhỏ nhất<br>
+                        <span style="font-size: 16px; color: #777;">với ràng buộc g(x) ≤ 0</span>
+                    </div>
+
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea; margin-bottom: 5px;">x = biến quyết định</h4>
+                            <p style="font-size: 14px; margin: 0;">Vị trí trạm? Tỉ lệ nguyên liệu?<br>Kích thước dầm? Giá bán?</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #e74c3c; margin-bottom: 5px;">f(x) = hàm mục tiêu</h4>
+                            <p style="font-size: 14px; margin: 0;">Chi phí? Quãng đường?<br>Khối lượng? Sai số?</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #f39c12; margin-bottom: 5px;">g(x) = ràng buộc</h4>
+                            <p style="font-size: 14px; margin: 0;">Đủ bền? Đủ dinh dưỡng?<br>Không trùng lịch?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Local vs Global minimum -->
+            <div class="slide" data-slide="3">
+                <div class="slide-content">
+                    <h2>Local Minimum vs Global Minimum</h2>
+                    <canvas id="vizLocalGlobal" class="viz-canvas" width="800" height="320"></canvas>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center;">
+                            <h3 style="color: #e74c3c;">Local Minimum</h3>
+                            <p>Thấp nhất <strong>trong vùng lân cận</strong></p>
+                            <p>Như cái hố nhỏ - đứng trong hố thì thấy mình thấp nhất, nhưng có hố sâu hơn ở chỗ khác</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center;">
+                            <h3 style="color: #2ecc71;">Global Minimum</h3>
+                            <p>Thấp nhất <strong>toàn bộ</strong></p>
+                            <p>Cái hố sâu nhất - đây mới là đáp án thật sự mà ta muốn tìm</p>
+                        </div>
+                    </div>
+                    <div class="info-box warning">
+                        <strong>Vấn đề lớn:</strong> Gradient Descent chỉ "nhìn" xung quanh → dễ kẹt ở local min. GA và PSO thử <strong>nhiều vị trí cùng lúc</strong> → thoát được local min tốt hơn.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: GD Ý tưởng -->
+            <div class="slide" data-slide="4">
+                <div class="slide-content">
+                    <p class="section-divider">Gradient Descent</p>
+                    <h2>Ý tưởng: Bi lăn xuống dốc</h2>
+                    <canvas id="vizGDIdea" class="viz-canvas" width="800" height="280"></canvas>
+                    <div class="info-box" style="text-align: center; font-size: 17px;">
+                        Đặt viên bi ở 1 vị trí bất kỳ trên đồ thị → nó tự lăn xuống chỗ thấp nhất.<br>
+                        <strong>Dốc = đạo hàm.</strong> Dốc nhiều → bước lớn. Gần đáy → bước nhỏ dần.
+                    </div>
+                    <div class="formula-box">
+                        x<sub>mới</sub> = x<sub>cũ</sub> − <span style="color: #e74c3c;">lr</span> × <span style="color: #667eea;">f'(x<sub>cũ</sub>)</span>
+                    </div>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #2c3e50;">x<sub>cũ</sub></h4>
+                            <p style="font-size: 14px; margin: 0;">Vị trí hiện tại<br>của viên bi</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #e74c3c;">lr (learning rate)</h4>
+                            <p style="font-size: 14px; margin: 0;">Kích thước bước đi<br>Chọn bao nhiêu? → slide sau</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea;">f'(x) (đạo hàm)</h4>
+                            <p style="font-size: 14px; margin: 0;">Độ dốc tại vị trí hiện tại<br>Âm → đi sang phải, Dương → đi sang trái</p>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 1</div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Learning Rate -->
+            <div class="slide" data-slide="5">
+                <div class="slide-content">
+                    <h2>Learning Rate - Kích thước bước đi</h2>
+                    <canvas id="vizLR" class="viz-canvas" width="800" height="350"></canvas>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #e74c3c;">
+                            <h3 style="color: #e74c3c;">lr quá nhỏ (0.001)</h3>
+                            <p>Bước đi rất nhỏ<br>Chậm rì → tốn hàng nghìn bước<br>Có thể chưa đến đáy đã hết kiên nhẫn</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #2ecc71;">
+                            <h3 style="color: #2ecc71;">lr vừa phải (0.1)</h3>
+                            <p>Bước đi vừa đủ<br>Hội tụ nhanh và chính xác<br><strong>Đây là mục tiêu!</strong></p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #f39c12;">
+                            <h3 style="color: #f39c12;">lr quá lớn (1.5)</h3>
+                            <p>Bước đi quá lớn<br>Nhảy qua nhảy lại, không hội tụ<br>Có thể bay ra vô cực!</p>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Quy tắc thực tế:</strong> Thử lr = 0.01, 0.1, 0.5. Nếu dao động → giảm lr. Nếu quá chậm → tăng lr.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: GD 1 biến code tay -->
+            <div class="slide" data-slide="6">
+                <div class="slide-content">
+                    <h2>GD 1 biến: Code tay</h2>
+                    <p>Tìm min của f(x) = x² − 4x + 5 → đáp án chính xác: x = 2, f(2) = 1</p>
+                    <div class="code-block"><span class="keyword">def</span> <span class="function">f</span>(x):
+    <span class="keyword">return</span> x**<span class="number">2</span> - <span class="number">4</span>*x + <span class="number">5</span>
+
+<span class="keyword">def</span> <span class="function">df</span>(x):                     <span class="comment"># đạo hàm f'(x) = 2x - 4</span>
+    <span class="keyword">return</span> <span class="number">2</span>*x - <span class="number">4</span>
+
+<span class="comment"># Gradient Descent</span>
+x = <span class="number">0.0</span>                         <span class="comment"># xuất phát từ x = 0</span>
+lr = <span class="number">0.1</span>                        <span class="comment"># learning rate</span>
+
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">20</span>):
+    grad = <span class="function">df</span>(x)                <span class="comment"># tính đạo hàm tại x</span>
+    x = x - lr * grad           <span class="comment"># cập nhật x</span>
+    <span class="function">print</span>(<span class="string">f"Bước {i+1}: x = {x:.4f}, f(x) = {<span class="function">f</span>(x):.4f}"</span>)
+
+<span class="comment"># Kết quả: x → 2.0000, f(x) → 1.0000</span></div>
+                    <div class="info-box">
+                        <strong>Chỉ 6 dòng code chính!</strong> Vòng lặp: tính đạo hàm → cập nhật x → lặp lại. Đơn giản vậy thôi.
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 2</div>
+                </div>
+            </div>
+
+            <!-- Slide 7: GD 2 biến -->
+            <div class="slide" data-slide="7">
+                <div class="slide-content">
+                    <h2>GD 2 biến: Contour Plot</h2>
+                    <p>Tìm min của f(x, y) = x² + y² → đáp án: (0, 0), f = 0</p>
+                    <canvas id="vizGD2D" class="viz-canvas" width="800" height="350"></canvas>
+                    <div class="code-block"><span class="comment"># Gradient: ∇f = (∂f/∂x, ∂f/∂y) = (2x, 2y)</span>
+x, y = <span class="number">3.0</span>, <span class="number">4.0</span>              <span class="comment"># xuất phát</span>
+lr = <span class="number">0.1</span>
+
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">30</span>):
+    dx = <span class="number">2</span> * x                 <span class="comment"># ∂f/∂x</span>
+    dy = <span class="number">2</span> * y                 <span class="comment"># ∂f/∂y</span>
+    x = x - lr * dx             <span class="comment"># cập nhật x</span>
+    y = y - lr * dy             <span class="comment"># cập nhật y</span>
+
+<span class="function">print</span>(<span class="string">f"Kết quả: ({x:.4f}, {y:.4f})"</span>)  <span class="comment"># → (0.0000, 0.0000)</span></div>
+                    <div class="info-box">
+                        <strong>Mở rộng tự nhiên:</strong> 1 biến → đạo hàm f'(x). 2 biến → gradient ∇f = (∂f/∂x, ∂f/∂y). Cùng công thức, chỉ thêm chiều.
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 3</div>
+                </div>
+            </div>
+
+            <!-- Slide 8: scipy.optimize -->
+            <div class="slide" data-slide="8">
+                <div class="slide-content">
+                    <h2>Dùng thư viện: scipy.optimize</h2>
+                    <p>Cùng bài toán, nhưng <strong>3 dòng code</strong> thay vì tự viết vòng lặp</p>
+                    <div class="code-block"><span class="keyword">from</span> <span class="module">scipy.optimize</span> <span class="keyword">import</span> <span class="function">minimize</span>
+
+<span class="comment"># Cách 1: Hàm 1 biến f(x) = x² - 4x + 5</span>
+ket_qua = <span class="function">minimize</span>(<span class="keyword">lambda</span> x: x[<span class="number">0</span>]**<span class="number">2</span> - <span class="number">4</span>*x[<span class="number">0</span>] + <span class="number">5</span>, x0=[<span class="number">0</span>])
+<span class="function">print</span>(ket_qua.x)               <span class="comment"># [2.0]</span>
+<span class="function">print</span>(ket_qua.fun)             <span class="comment"># 1.0</span>
+
+<span class="comment"># Cách 2: Hàm 2 biến f(x,y) = x² + y²</span>
+ket_qua = <span class="function">minimize</span>(<span class="keyword">lambda</span> p: p[<span class="number">0</span>]**<span class="number">2</span> + p[<span class="number">1</span>]**<span class="number">2</span>, x0=[<span class="number">3</span>, <span class="number">4</span>])
+<span class="function">print</span>(ket_qua.x)               <span class="comment"># [0.0, 0.0]</span>
+<span class="function">print</span>(ket_qua.fun)             <span class="comment"># 0.0</span></div>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #667eea;">
+                            <h3>Code tay</h3>
+                            <ul style="text-align: left;">
+                                <li>Hiểu sâu thuật toán</li>
+                                <li>Tùy chỉnh linh hoạt</li>
+                                <li>Phải tự viết đạo hàm</li>
+                                <li>~10-15 dòng code</li>
+                            </ul>
+                        </div>
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #2ecc71;">
+                            <h3>scipy.optimize</h3>
+                            <ul style="text-align: left;">
+                                <li>Nhanh, gọn, đáng tin cậy</li>
+                                <li>Tự tính đạo hàm số</li>
+                                <li>Nhiều method: BFGS, Nelder-Mead, CG...</li>
+                                <li>~3 dòng code</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Thực tế:</strong> Hiểu bằng code tay trước, rồi dùng thư viện cho nhanh. Cả 2 đều cần biết!
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 4</div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Hạn chế của GD -->
+            <div class="slide" data-slide="9">
+                <div class="slide-content">
+                    <p class="section-divider">Genetic Algorithm</p>
+                    <h2>Hạn chế của Gradient Descent</h2>
+                    <div class="compare-container">
+                        <div class="compare-box" style="border-top: 4px solid #e74c3c;">
+                            <h3 style="color: #e74c3c; text-align: center;">Vấn đề 1: Kẹt Local Min</h3>
+                            <p>Hàm có nhiều "hố" → GD rơi vào hố gần nhất, không phải hố sâu nhất.</p>
+                            <p style="text-align: center; font-size: 14px; color: #999;">VD: f(x) = x⁴ − 8x² + x<br>Xuất phát bên phải → kẹt ở hố phải, bỏ lỡ hố trái sâu hơn</p>
+                        </div>
+                        <div class="compare-box" style="border-top: 4px solid #f39c12;">
+                            <h3 style="color: #f39c12; text-align: center;">Vấn đề 2: Cần đạo hàm</h3>
+                            <p>GD bắt buộc phải tính f'(x). Nhưng nhiều bài <strong>không có đạo hàm</strong>:</p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>Xếp lịch thi (biến rời rạc: slot 1, 2, 3...)</li>
+                                <li>Tuyến giao hàng (biến là hoán vị)</li>
+                                <li>Chọn nguyên liệu (có/không)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-box success">
+                        <strong>Giải pháp:</strong> Dùng thuật toán <strong>không cần đạo hàm</strong>, lấy cảm hứng từ tự nhiên!<br>
+                        → <strong>Genetic Algorithm (GA)</strong>: học từ tiến hóa sinh học<br>
+                        → <strong>Particle Swarm Optimization (PSO)</strong>: học từ đàn chim/cá
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: GA Ý tưởng -->
+            <div class="slide" data-slide="10">
+                <div class="slide-content">
+                    <h2>GA: Ý tưởng từ tiến hóa</h2>
+                    <div class="info-box" style="text-align: center; font-size: 17px;">
+                        Trong tự nhiên: cá thể <strong>mạnh</strong> sống sót, <strong>sinh sản</strong>, tạo thế hệ sau <strong>tốt hơn</strong>.<br>
+                        GA mô phỏng quá trình này để tìm lời giải tối ưu.
+                    </div>
+                    <canvas id="vizGAIdea" class="viz-canvas" width="800" height="300"></canvas>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea;">Sinh học</h4>
+                            <p style="font-size: 14px; margin: 0;">Cá thể = 1 con vật<br>Gene = DNA<br>Fitness = khả năng sinh tồn</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea;">GA</h4>
+                            <p style="font-size: 14px; margin: 0;">Cá thể = 1 lời giải<br>Gene = mảng số<br>Fitness = f(x) tốt cỡ nào</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea;">VD: Giao hàng</h4>
+                            <p style="font-size: 14px; margin: 0;">Cá thể = [3,1,5,2,4]<br>Gene = thứ tự ghé khách<br>Fitness = tổng quãng đường</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: GA 4 bước chi tiết -->
+            <div class="slide" data-slide="11">
+                <div class="slide-content">
+                    <h2>GA: 4 bước hoạt động</h2>
+                    <canvas id="vizGA4Steps" class="viz-canvas" width="800" height="380"></canvas>
+                    <div class="info-box">
+                        <strong>Lặp lại 100-1000 thế hệ.</strong> Mỗi thế hệ, quần thể <strong>tốt dần lên</strong> vì cá thể yếu bị loại, cá thể mạnh được giữ lại và tạo con.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 12: GA Code tay -->
+            <div class="slide" data-slide="12">
+                <div class="slide-content">
+                    <h2>GA: Code tay</h2>
+                    <p>Tìm min f(x) = x⁴ − 8x² + x trên [-5, 5] (hàm có nhiều local min)</p>
+                    <div class="code-block"><span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="keyword">def</span> <span class="function">f</span>(x):
+    <span class="keyword">return</span> x**<span class="number">4</span> - <span class="number">8</span>*x**<span class="number">2</span> + x
+
+<span class="comment"># 1. Khởi tạo quần thể 50 cá thể ngẫu nhiên</span>
+pop = np.random.<span class="function">uniform</span>(-<span class="number">5</span>, <span class="number">5</span>, size=<span class="number">50</span>)
+
+<span class="keyword">for</span> gen <span class="keyword">in</span> <span class="function">range</span>(<span class="number">100</span>):
+    fitness = <span class="function">f</span>(pop)                    <span class="comment"># Tính fitness</span>
+
+    <span class="comment"># 2. Chọn lọc: giữ 20 cá thể tốt nhất (f nhỏ nhất)</span>
+    best_idx = np.<span class="function">argsort</span>(fitness)[:<span class="number">20</span>]
+    parents = pop[best_idx]
+
+    <span class="comment"># 3. Lai ghép: trung bình 2 cha mẹ ngẫu nhiên</span>
+    children = []
+    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">30</span>):
+        p1, p2 = parents[np.random.<span class="function">choice</span>(<span class="number">20</span>, <span class="number">2</span>, replace=<span class="keyword">False</span>)]
+        child = (p1 + p2) / <span class="number">2</span>           <span class="comment"># Lai ghép đơn giản</span>
+        children.<span class="function">append</span>(child)
+
+    <span class="comment"># 4. Đột biến: thêm nhiễu nhỏ</span>
+    children = np.<span class="function">array</span>(children)
+    children += np.random.<span class="function">normal</span>(<span class="number">0</span>, <span class="number">0.3</span>, <span class="number">30</span>)
+
+    pop = np.<span class="function">concatenate</span>([parents, children])  <span class="comment"># Thế hệ mới</span>
+
+<span class="function">print</span>(<span class="string">f"x tối ưu = {pop[np.<span class="function">argmin</span>(<span class="function">f</span>(pop))]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"f(x)    = {<span class="function">f</span>(pop[np.<span class="function">argmin</span>(<span class="function">f</span>(pop))]):.4f}"</span>)</div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 5</div>
+                </div>
+            </div>
+
+            <!-- Slide 13: GA Thư viện DEAP -->
+            <div class="slide" data-slide="13">
+                <div class="slide-content">
+                    <h2>GA: Thư viện DEAP</h2>
+                    <p>Cùng bài toán, dùng thư viện chuyên nghiệp</p>
+                    <div class="code-block"><span class="keyword">from</span> <span class="module">deap</span> <span class="keyword">import</span> base, creator, tools, algorithms
+<span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="keyword">def</span> <span class="function">f</span>(individual):
+    x = individual[<span class="number">0</span>]
+    <span class="keyword">return</span> (x**<span class="number">4</span> - <span class="number">8</span>*x**<span class="number">2</span> + x,)        <span class="comment"># DEAP yêu cầu tuple</span>
+
+<span class="comment"># Cấu hình</span>
+creator.<span class="function">create</span>(<span class="string">"FitnessMin"</span>, base.Fitness, weights=(-<span class="number">1.0</span>,))
+creator.<span class="function">create</span>(<span class="string">"Individual"</span>, list, fitness=creator.FitnessMin)
+
+toolbox = base.<span class="function">Toolbox</span>()
+toolbox.<span class="function">register</span>(<span class="string">"attr"</span>, np.random.uniform, -<span class="number">5</span>, <span class="number">5</span>)
+toolbox.<span class="function">register</span>(<span class="string">"individual"</span>, tools.initRepeat, creator.Individual, toolbox.attr, n=<span class="number">1</span>)
+toolbox.<span class="function">register</span>(<span class="string">"population"</span>, tools.initRepeat, list, toolbox.individual)
+toolbox.<span class="function">register</span>(<span class="string">"evaluate"</span>, f)
+toolbox.<span class="function">register</span>(<span class="string">"mate"</span>, tools.cxBlend, alpha=<span class="number">0.5</span>)
+toolbox.<span class="function">register</span>(<span class="string">"mutate"</span>, tools.mutGaussian, mu=<span class="number">0</span>, sigma=<span class="number">0.3</span>, indpb=<span class="number">1.0</span>)
+toolbox.<span class="function">register</span>(<span class="string">"select"</span>, tools.selTournament, tournsize=<span class="number">3</span>)
+
+<span class="comment"># Chạy GA</span>
+pop = toolbox.<span class="function">population</span>(n=<span class="number">50</span>)
+result = algorithms.<span class="function">eaSimple</span>(pop, toolbox, cxpb=<span class="number">0.7</span>, mutpb=<span class="number">0.2</span>, ngen=<span class="number">100</span>)
+best = tools.<span class="function">selBest</span>(pop, <span class="number">1</span>)[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">f"x = {best[0]:.4f}, f(x) = {f(best)[0]:.4f}"</span>)</div>
+                    <div class="info-box warning">
+                        <strong>Cài đặt:</strong> <code>pip install deap</code> hoặc <code>!pip install deap</code> trong Colab/Jupyter
+                    </div>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #667eea;">
+                            <h3>Code tay (~20 dòng)</h3>
+                            <p>Hiểu rõ từng bước<br>Dễ tùy chỉnh<br>Chỉ phù hợp bài đơn giản</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; border-top: 4px solid #2ecc71;">
+                            <h3>DEAP (~15 dòng config)</h3>
+                            <p>Nhiều operator có sẵn<br>Hỗ trợ bài phức tạp (TSP, lịch thi...)<br>Cộng đồng lớn, tài liệu tốt</p>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 6</div>
+                </div>
+            </div>
+
+            <!-- Slide 14: PSO Ý tưởng -->
+            <div class="slide" data-slide="14">
+                <div class="slide-content">
+                    <p class="section-divider">Particle Swarm Optimization</p>
+                    <h2>PSO: Ý tưởng từ đàn chim</h2>
+                    <canvas id="vizPSOIdea" class="viz-canvas" width="800" height="300"></canvas>
+                    <div class="info-box" style="text-align: center; font-size: 17px;">
+                        Đàn chim tìm thức ăn: mỗi con bay theo <strong>hướng riêng</strong>, nhưng luôn học từ:<br>
+                        <strong>1)</strong> Chỗ tốt nhất <strong>mình</strong> từng đến &nbsp;&nbsp; <strong>2)</strong> Chỗ tốt nhất <strong>cả đàn</strong> từng đến
+                    </div>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #667eea;">Particle (hạt)</h4>
+                            <p style="font-size: 14px; margin: 0;">= 1 lời giải<br>Có <strong>vị trí</strong> (x) và <strong>vận tốc</strong> (v)<br>Di chuyển trong không gian tìm kiếm</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #e74c3c;">pBest (cá nhân)</h4>
+                            <p style="font-size: 14px; margin: 0;">Vị trí tốt nhất mà<br><strong>bản thân particle</strong> từng đến<br>"Kinh nghiệm cá nhân"</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 15px;">
+                            <h4 style="color: #2ecc71;">gBest (toàn cục)</h4>
+                            <p style="font-size: 14px; margin: 0;">Vị trí tốt nhất mà<br><strong>cả đàn</strong> từng đến<br>"Trí tuệ tập thể"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 15: PSO Công thức -->
+            <div class="slide" data-slide="15">
+                <div class="slide-content">
+                    <h2>PSO: Công thức cập nhật</h2>
+                    <canvas id="vizPSOFormula" class="viz-canvas" width="800" height="200"></canvas>
+                    <div class="formula-box" style="max-width: 800px;">
+                        <strong>Vận tốc mới:</strong><br>
+                        v = <span style="color: #667eea;">w × v</span> + <span style="color: #e74c3c;">c₁ × rand() × (pBest − x)</span> + <span style="color: #2ecc71;">c₂ × rand() × (gBest − x)</span>
+                    </div>
+                    <div class="formula-box" style="max-width: 800px; margin-top: 10px;">
+                        <strong>Vị trí mới:</strong> &nbsp; x = x + v
+                    </div>
+                    <div class="compare-container">
+                        <div class="compare-box" style="text-align: center; padding: 12px; border-top: 4px solid #667eea;">
+                            <h4 style="color: #667eea;">w × v</h4>
+                            <p style="font-size: 13px; margin: 0;"><strong>Quán tính</strong><br>Tiếp tục bay theo hướng cũ<br>w = 0.5 ~ 0.9</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 12px; border-top: 4px solid #e74c3c;">
+                            <h4 style="color: #e74c3c;">c₁ × (pBest − x)</h4>
+                            <p style="font-size: 13px; margin: 0;"><strong>Học từ bản thân</strong><br>Kéo về chỗ tốt nhất mình từng đến<br>c₁ = 1.5 ~ 2.0</p>
+                        </div>
+                        <div class="compare-box" style="text-align: center; padding: 12px; border-top: 4px solid #2ecc71;">
+                            <h4 style="color: #2ecc71;">c₂ × (gBest − x)</h4>
+                            <p style="font-size: 13px; margin: 0;"><strong>Học từ đàn</strong><br>Kéo về chỗ tốt nhất cả đàn<br>c₂ = 1.5 ~ 2.0</p>
+                        </div>
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 7</div>
+                </div>
+            </div>
+
+            <!-- Slide 16: PSO Code tay -->
+            <div class="slide" data-slide="16">
+                <div class="slide-content">
+                    <h2>PSO: Code tay</h2>
+                    <p>Cùng bài: tìm min f(x) = x⁴ − 8x² + x trên [-5, 5]</p>
+                    <div class="code-block"><span class="keyword">import</span> <span class="module">numpy</span> <span class="keyword">as</span> <span class="module">np</span>
+
+<span class="keyword">def</span> <span class="function">f</span>(x):
+    <span class="keyword">return</span> x**<span class="number">4</span> - <span class="number">8</span>*x**<span class="number">2</span> + x
+
+n = <span class="number">30</span>                               <span class="comment"># 30 particles</span>
+x = np.random.<span class="function">uniform</span>(-<span class="number">5</span>, <span class="number">5</span>, n)    <span class="comment"># vị trí ban đầu</span>
+v = np.random.<span class="function">uniform</span>(-<span class="number">1</span>, <span class="number">1</span>, n)    <span class="comment"># vận tốc ban đầu</span>
+pbest = x.<span class="function">copy</span>()                     <span class="comment"># best cá nhân</span>
+gbest = x[np.<span class="function">argmin</span>(<span class="function">f</span>(x))]           <span class="comment"># best toàn cục</span>
+w, c1, c2 = <span class="number">0.7</span>, <span class="number">1.5</span>, <span class="number">1.5</span>
+
+<span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">100</span>):
+    r1 = np.random.<span class="function">rand</span>(n)
+    r2 = np.random.<span class="function">rand</span>(n)
+    v = w*v + c1*r1*(pbest - x) + c2*r2*(gbest - x)  <span class="comment"># cập nhật vận tốc</span>
+    x = x + v                                          <span class="comment"># cập nhật vị trí</span>
+
+    <span class="comment"># Cập nhật pBest và gBest</span>
+    better = <span class="function">f</span>(x) < <span class="function">f</span>(pbest)
+    pbest[better] = x[better]
+    gbest = pbest[np.<span class="function">argmin</span>(<span class="function">f</span>(pbest))]
+
+<span class="function">print</span>(<span class="string">f"x tối ưu = {gbest:.4f}, f(x) = {<span class="function">f</span>(gbest):.4f}"</span>)</div>
+                    <div class="info-box">
+                        <strong>Chỉ 3 dòng quan trọng:</strong> Cập nhật v → cập nhật x → cập nhật pBest/gBest. Lặp lại 100 vòng.
+                    </div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 8</div>
+                </div>
+            </div>
+
+            <!-- Slide 17: PSO Thư viện pyswarm -->
+            <div class="slide" data-slide="17">
+                <div class="slide-content">
+                    <h2>PSO: Thư viện pyswarm</h2>
+                    <p>Cùng bài toán, chỉ cần <strong>4 dòng</strong></p>
+                    <div class="code-block"><span class="keyword">from</span> <span class="module">pyswarm</span> <span class="keyword">import</span> <span class="function">pso</span>
+
+<span class="keyword">def</span> <span class="function">f</span>(x):
+    <span class="keyword">return</span> x[<span class="number">0</span>]**<span class="number">4</span> - <span class="number">8</span>*x[<span class="number">0</span>]**<span class="number">2</span> + x[<span class="number">0</span>]
+
+lb = [-<span class="number">5</span>]      <span class="comment"># lower bound</span>
+ub = [<span class="number">5</span>]       <span class="comment"># upper bound</span>
+
+x_opt, f_opt = <span class="function">pso</span>(f, lb, ub, swarmsize=<span class="number">30</span>, maxiter=<span class="number">100</span>)
+<span class="function">print</span>(<span class="string">f"x = {x_opt[0]:.4f}, f(x) = {f_opt:.4f}"</span>)</div>
+                    <div class="info-box warning">
+                        <strong>Cài đặt:</strong> <code>pip install pyswarm</code> hoặc <code>!pip install pyswarm</code> trong Colab/Jupyter
+                    </div>
+                    <div class="code-block"><span class="comment"># Bài 2 biến: f(x,y) = x² + y² + noise (nhiều local min)</span>
+<span class="keyword">def</span> <span class="function">f2</span>(p):
+    x, y = p
+    <span class="keyword">return</span> x**<span class="number">2</span> + y**<span class="number">2</span> + <span class="number">2</span>*np.<span class="function">sin</span>(<span class="number">5</span>*x) + <span class="number">2</span>*np.<span class="function">sin</span>(<span class="number">5</span>*y)
+
+x_opt, f_opt = <span class="function">pso</span>(f2, [-<span class="number">5</span>,-<span class="number">5</span>], [<span class="number">5</span>,<span class="number">5</span>], swarmsize=<span class="number">50</span>, maxiter=<span class="number">200</span>)
+<span class="function">print</span>(<span class="string">f"(x,y) = ({x_opt[0]:.3f}, {x_opt[1]:.3f}), f = {f_opt:.4f}"</span>)</div>
+                    <div class="notebook-badge">📓 Mở Notebook &rarr; Section 9</div>
+                </div>
+            </div>
+
+            <!-- Slide 18: So sánh GD vs GA vs PSO -->
+            <div class="slide" data-slide="18">
+                <div class="slide-content">
+                    <p class="section-divider">Tổng kết</p>
+                    <h2>So sánh: GD vs GA vs PSO</h2>
+                    <table>
+                        <tr>
+                            <th>Tiêu chí</th>
+                            <th style="color: #ffd700;">Gradient Descent</th>
+                            <th style="color: #ffd700;">Genetic Algorithm</th>
+                            <th style="color: #ffd700;">PSO</th>
+                        </tr>
+                        <tr><td><strong>Cần đạo hàm?</strong></td><td>Có</td><td>Không</td><td>Không</td></tr>
+                        <tr><td><strong>Bài rời rạc?</strong></td><td>Không</td><td>Có</td><td>Có (biến thể)</td></tr>
+                        <tr><td><strong>Thoát local min?</strong></td><td>Khó</td><td>Tốt</td><td>Tốt</td></tr>
+                        <tr><td><strong>Tốc độ</strong></td><td>Nhanh</td><td>Chậm</td><td>Trung bình</td></tr>
+                        <tr><td><strong>Dễ hiểu?</strong></td><td>Dễ</td><td>Trung bình</td><td>Dễ</td></tr>
+                        <tr><td><strong>Tham số cần chỉnh</strong></td><td>lr</td><td>pop_size, crossover, mutation rate</td><td>w, c₁, c₂, swarm_size</td></tr>
+                        <tr><td><strong>Thư viện</strong></td><td>scipy.optimize</td><td>DEAP</td><td>pyswarm</td></tr>
+                    </table>
+                    <div class="info-box success">
+                        <strong>Quy tắc chọn:</strong><br>
+                        • Hàm liên tục, có đạo hàm → <strong>GD</strong> (nhanh nhất)<br>
+                        • Bài rời rạc, tổ hợp (lịch thi, TSP) → <strong>GA</strong><br>
+                        • Hàm liên tục nhưng nhiều local min → <strong>PSO</strong> hoặc <strong>GA</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 19: Bài tập 5 nhóm -->
+            <div class="slide" data-slide="19">
+                <div class="slide-content">
+                    <h2>Bài tập nhóm (trình bày tuần sau)</h2>
+                    <table>
+                        <tr><th>Nhóm</th><th>Bài toán</th><th>Phương pháp</th></tr>
+                        <tr>
+                            <td><strong>1</strong></td>
+                            <td><strong>Vị trí 3 trạm cứu hỏa</strong><br><span style="font-size:12px;color:#777;">30 khu dân cư, trọng số dân số × mức nguy hiểm. Tìm vị trí 3 trạm tối ưu.</span></td>
+                            <td>GD / scipy<br><span style="font-size:12px;color:#777;">6 biến (x₁,y₁,x₂,y₂,x₃,y₃)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>2</strong></td>
+                            <td><strong>Xếp lịch thi 12 môn</strong><br><span style="font-size:12px;color:#777;">200 SV, 5 phòng, 3 ngày × 3 ca. Không trùng, không quá tải phòng.</span></td>
+                            <td>GA<br><span style="font-size:12px;color:#777;">Biến rời rạc: slot mỗi môn</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>3</strong></td>
+                            <td><strong>Pha chế bê tông</strong><br><span style="font-size:12px;color:#777;">6 nguyên liệu. Đủ cường độ ≥ 30 MPa, độ sụt 8-12cm. Chi phí thấp nhất.</span></td>
+                            <td>scipy.linprog / GD<br><span style="font-size:12px;color:#777;">Quy hoạch tuyến tính</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>4</strong></td>
+                            <td><strong>Giao hàng 20 khách, 3 xe</strong><br><span style="font-size:12px;color:#777;">Mỗi khách có khung giờ. Mỗi xe chở tối đa 8 đơn. Tuyến ngắn nhất.</span></td>
+                            <td>GA<br><span style="font-size:12px;color:#777;">Hoán vị + chia xe</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>5</strong></td>
+                            <td><strong>Thiết kế dầm chữ I</strong><br><span style="font-size:12px;color:#777;">Chịu 50 kN. Ràng buộc: ứng suất, độ võng. Tìm h, b, t ít thép nhất.</span></td>
+                            <td>GD / scipy<br><span style="font-size:12px;color:#777;">3 biến + ràng buộc kỹ thuật</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Slide 20: Output & BTVN -->
+            <div class="slide" data-slide="20">
+                <div class="slide-content">
+                    <h2>Output buổi học</h2>
+                    <div class="checklist" style="max-width: 700px;">
+                        <div class="checklist-item">Hiểu bài toán tối ưu: biến, hàm mục tiêu, ràng buộc</div>
+                        <div class="checklist-item">Biết code GD từ đầu (1 biến và 2 biến)</div>
+                        <div class="checklist-item">Hiểu ý tưởng GA: chọn lọc → lai ghép → đột biến</div>
+                        <div class="checklist-item">Hiểu ý tưởng PSO: pBest, gBest, vận tốc</div>
+                        <div class="checklist-item">Biết dùng thư viện: scipy, DEAP, pyswarm</div>
+                        <div class="checklist-item">Biết khi nào dùng GD, GA hay PSO</div>
+                    </div>
+                    <h3>Yêu cầu bài tập nhóm</h3>
+                    <ul>
+                        <li>Trình bày <strong>5-7 phút</strong> tuần sau: Bài toán → Cách giải → Kết quả</li>
+                        <li>Phải có <strong>ít nhất 1 đồ thị</strong> minh họa quá trình tối ưu</li>
+                        <li>Phải <strong>so sánh</strong> phương án tối ưu vs phương án ngẫu nhiên</li>
+                        <li>Nộp <strong>notebook lên GitHub</strong></li>
+                    </ul>
+                    <div class="info-box success">
+                        <strong>Tuần sau:</strong> 5 nhóm trình bày bài tập + Tổng kết tối ưu hóa
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&#8592;</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">&#8594;</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 21;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach((s, i) => {
+                s.classList.remove('active', 'prev');
+                if (i === currentSlide) s.classList.add('active');
+                else if (i < currentSlide) s.classList.add('prev');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', parseInt(item.dataset.slide) === currentSlide);
+            });
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('progressFill').style.width = ((currentSlide / (totalSlides - 1)) * 100) + '%';
+
+            // Vẽ canvas khi slide active
+            if (currentSlide === 3) drawLocalGlobal();
+            if (currentSlide === 4) drawGDIdea();
+            if (currentSlide === 5) drawLR();
+            if (currentSlide === 7) drawGD2D();
+            if (currentSlide === 10) drawGAIdea();
+            if (currentSlide === 11) drawGA4Steps();
+            if (currentSlide === 14) drawPSOIdea();
+            if (currentSlide === 15) drawPSOFormula();
+        }
+
+        function nextSlide() { if (currentSlide < totalSlides - 1) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentSlide = parseInt(item.dataset.slide);
+                updateSlide();
+                document.getElementById('sidebar').classList.remove('open');
+            });
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // ==============================
+        // Visualization: Local vs Global
+        // ==============================
+        function drawLocalGlobal() {
+            const c = document.getElementById('vizLocalGlobal');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 320 * dpr;
+            c.style.width = '800px'; c.style.height = '320px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 320;
+            const mx = 60, my = 40, gw = W - 2*mx, gh = H - 2*my;
+
+            // Background
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            // Hàm: f(x) = 0.5*x^4 - 4*x^2 + 0.5*x + 8  (có 2 local min, 1 global)
+            function f(x) {
+                return 0.08 * Math.pow(x, 4) - 0.9 * Math.pow(x, 2) + 0.15 * x + 5;
+            }
+
+            const xmin = -4.5, xmax = 4.5;
+            const ymin = -1, ymax = 9;
+
+            function toCanvas(x, y) {
+                return [
+                    mx + (x - xmin) / (xmax - xmin) * gw,
+                    my + gh - (y - ymin) / (ymax - ymin) * gh
+                ];
+            }
+
+            // Grid
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 1;
+            for (let y = 0; y <= 8; y += 2) {
+                const [, cy] = toCanvas(0, y);
+                ctx.beginPath(); ctx.moveTo(mx, cy); ctx.lineTo(mx + gw, cy); ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1.5;
+            const [ax0, ay0] = toCanvas(xmin, 0);
+            const [ax1] = toCanvas(xmax, 0);
+            ctx.beginPath(); ctx.moveTo(ax0, ay0); ctx.lineTo(ax1, ay0); ctx.stroke();
+
+            // Draw function curve
+            ctx.beginPath();
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            for (let px = 0; px <= gw; px++) {
+                const x = xmin + px / gw * (xmax - xmin);
+                const y = f(x);
+                const [cx, cy] = toCanvas(x, y);
+                if (px === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+
+            // Fill area under curve lightly
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(102, 126, 234, 0.06)';
+            for (let px = 0; px <= gw; px++) {
+                const x = xmin + px / gw * (xmax - xmin);
+                const y = f(x);
+                const [cx, cy] = toCanvas(x, y);
+                if (px === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            const [, bottomY] = toCanvas(0, ymin);
+            ctx.lineTo(mx + gw, bottomY);
+            ctx.lineTo(mx, bottomY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Tìm các điểm cực trị bằng sampling
+            // Local min 1: khoảng x ≈ -3.1
+            // Local min 2: khoảng x ≈ 2.9
+            // Global min: local min 1 (sâu hơn)
+            let localMin1X = -3.1, localMin2X = 2.9;
+            // Tinh chỉnh
+            for (let x = -4; x < -2; x += 0.01) { if (f(x) < f(localMin1X)) localMin1X = x; }
+            for (let x = 2; x < 4; x += 0.01) { if (f(x) < f(localMin2X)) localMin2X = x; }
+
+            const globalMinX = f(localMin1X) < f(localMin2X) ? localMin1X : localMin2X;
+            const localMinX = f(localMin1X) < f(localMin2X) ? localMin2X : localMin1X;
+
+            // Draw Global Min marker
+            const [gx, gy] = toCanvas(globalMinX, f(globalMinX));
+            ctx.beginPath();
+            ctx.arc(gx, gy, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#2ecc71';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('Global Minimum', gx, gy - 18);
+            ctx.font = '12px Segoe UI';
+            ctx.fillStyle = '#555';
+            ctx.fillText('(hố sâu nhất)', gx, gy - 4 + 28);
+
+            // Draw Local Min marker
+            const [lx, ly] = toCanvas(localMinX, f(localMinX));
+            ctx.beginPath();
+            ctx.arc(lx, ly, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('Local Minimum', lx, ly - 18);
+            ctx.font = '12px Segoe UI';
+            ctx.fillStyle = '#555';
+            ctx.fillText('(GD dễ kẹt ở đây!)', lx, ly - 4 + 28);
+
+            // Draw local max marker
+            let localMaxX = 0;
+            for (let x = -1.5; x < 1.5; x += 0.01) { if (f(x) > f(localMaxX)) localMaxX = x; }
+            const [mxx, mxy] = toCanvas(localMaxX, f(localMaxX));
+            ctx.beginPath();
+            ctx.arc(mxx, mxy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#f39c12';
+            ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#f39c12';
+            ctx.font = 'bold 13px Segoe UI';
+            ctx.fillText('Local Maximum', mxx, mxy - 14);
+
+            // Axis labels
+            ctx.fillStyle = '#999';
+            ctx.font = '13px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('x (biến quyết định)', mx + gw/2, H - 8);
+            ctx.save();
+            ctx.translate(15, my + gh/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillText('f(x) (hàm mục tiêu)', 0, 0);
+            ctx.restore();
+
+            // Equation
+            ctx.fillStyle = '#667eea';
+            ctx.font = 'italic 13px Georgia';
+            ctx.textAlign = 'right';
+            ctx.fillText('f(x) = 0.08x⁴ − 0.9x² + 0.15x + 5', W - mx + 10, my + 15);
+        }
+
+        // ==============================
+        // Visualization: GD Idea (slide 4)
+        // ==============================
+        function drawGDIdea() {
+            const c = document.getElementById('vizGDIdea');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 280 * dpr;
+            c.style.width = '800px'; c.style.height = '280px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 280;
+            const mx = 60, my = 30, gw = W - 2*mx, gh = H - 2*my;
+
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            // f(x) = (x-2)^2 + 1
+            function f(x) { return (x - 2) * (x - 2) + 1; }
+            function df(x) { return 2 * (x - 2); }
+
+            const xmin = -1, xmax = 5, ymin = 0, ymax = 10;
+            function toC(x, y) {
+                return [mx + (x - xmin)/(xmax - xmin)*gw, my + gh - (y - ymin)/(ymax - ymin)*gh];
+            }
+
+            // Grid
+            ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+            for (let y = 0; y <= 10; y += 2) {
+                const [,cy] = toC(0, y);
+                ctx.beginPath(); ctx.moveTo(mx, cy); ctx.lineTo(mx+gw, cy); ctx.stroke();
+            }
+
+            // Curve
+            ctx.beginPath(); ctx.strokeStyle = '#667eea'; ctx.lineWidth = 3;
+            for (let px = 0; px <= gw; px++) {
+                const x = xmin + px/gw*(xmax-xmin);
+                const [cx, cy] = toC(x, f(x));
+                px === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+
+            // GD steps from x=0
+            let x = 0.0;
+            const lr = 0.15;
+            const steps = [];
+            steps.push({x: x, y: f(x)});
+            for (let i = 0; i < 8; i++) {
+                x = x - lr * df(x);
+                steps.push({x: x, y: f(x)});
+            }
+
+            // Draw path
+            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            for (let i = 0; i < steps.length; i++) {
+                const [cx, cy] = toC(steps[i].x, steps[i].y);
+                i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw points
+            for (let i = 0; i < steps.length; i++) {
+                const [cx, cy] = toC(steps[i].x, steps[i].y);
+                const r = i === 0 ? 8 : (i === steps.length-1 ? 8 : 5);
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+                ctx.fillStyle = i === 0 ? '#e74c3c' : (i === steps.length-1 ? '#2ecc71' : '#f39c12');
+                ctx.fill();
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            }
+
+            // Labels
+            const [sx, sy] = toC(steps[0].x, steps[0].y);
+            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('Xuất phát (x=0)', sx, sy - 14);
+
+            const last = steps[steps.length-1];
+            const [ex, ey] = toC(last.x, last.y);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillText('Hội tụ (x≈2)', ex + 40, ey - 14);
+
+            // Arrow annotations
+            const [cx3, cy3] = toC(steps[2].x, steps[2].y);
+            ctx.fillStyle = '#555'; ctx.font = '12px Segoe UI';
+            ctx.fillText('Dốc nhiều → bước lớn', cx3 + 80, cy3 - 20);
+
+            const [cx6, cy6] = toC(steps[5].x, steps[5].y);
+            ctx.fillText('Gần đáy → bước nhỏ', cx6 + 70, cy6 + 25);
+
+            // Min point
+            const [minx, miny] = toC(2, 1);
+            ctx.beginPath(); ctx.arc(minx, miny, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#667eea'; ctx.fill();
+            ctx.fillStyle = '#667eea'; ctx.font = 'bold 12px Segoe UI';
+            ctx.fillText('min: x=2, f=1', minx, miny + 20);
+
+            // Formula label
+            ctx.fillStyle = '#667eea'; ctx.font = 'italic 13px Georgia'; ctx.textAlign = 'right';
+            ctx.fillText('f(x) = (x−2)² + 1', W - mx + 10, my + 15);
+        }
+
+        // ==============================
+        // Visualization: Learning Rate (slide 5)
+        // ==============================
+        function drawLR() {
+            const c = document.getElementById('vizLR');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 350 * dpr;
+            c.style.width = '800px'; c.style.height = '350px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 350;
+
+            function f(x) { return (x - 3) * (x - 3) + 1; }
+            function df(x) { return 2 * (x - 3); }
+
+            const configs = [
+                { lr: 0.01, color: '#e74c3c', label: 'lr = 0.01 (quá nhỏ)', startX: 0 },
+                { lr: 0.1, color: '#2ecc71', label: 'lr = 0.1 (vừa phải)', startX: 0 },
+                { lr: 0.9, color: '#f39c12', label: 'lr = 0.9 (quá lớn)', startX: 0 }
+            ];
+
+            const pw = 240, ph = 280, gap = 20;
+            const startLeft = (W - 3*pw - 2*gap) / 2;
+
+            configs.forEach((cfg, idx) => {
+                const ox = startLeft + idx*(pw+gap), oy = 10;
+                const pmx = 25, pmy = 35, pgw = pw-2*pmx, pgh = ph-2*pmy;
+
+                // Panel bg
+                ctx.fillStyle = '#fafbff';
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(ox, oy, pw, ph, 8);
+                ctx.fill(); ctx.stroke();
+
+                // Title
+                ctx.fillStyle = cfg.color;
+                ctx.font = 'bold 13px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(cfg.label, ox+pw/2, oy+18);
+
+                const xmin = -1, xmax = 7, ymin = 0, ymax = 18;
+                function toC(x, y) {
+                    return [ox+pmx+(x-xmin)/(xmax-xmin)*pgw, oy+pmy+pgh-(y-ymin)/(ymax-ymin)*pgh];
+                }
+
+                // Curve
+                ctx.beginPath(); ctx.strokeStyle = '#aab'; ctx.lineWidth = 2;
+                for (let px = 0; px <= pgw; px++) {
+                    const x = xmin + px/pgw*(xmax-xmin);
+                    const [cx, cy] = toC(x, f(x));
+                    px === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+                }
+                ctx.stroke();
+
+                // GD steps
+                let x = cfg.startX;
+                const steps = [{x, y: f(x)}];
+                for (let i = 0; i < 20; i++) {
+                    x = x - cfg.lr * df(x);
+                    if (x < xmin-2 || x > xmax+2) break;
+                    steps.push({x, y: f(x)});
+                }
+
+                // Path
+                ctx.strokeStyle = cfg.color; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+                ctx.beginPath();
+                for (let i = 0; i < steps.length; i++) {
+                    const sx = Math.max(xmin, Math.min(xmax, steps[i].x));
+                    const sy = Math.max(ymin, Math.min(ymax, steps[i].y));
+                    const [cx, cy] = toC(sx, sy);
+                    i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+                }
+                ctx.stroke(); ctx.setLineDash([]);
+
+                // Points
+                const maxPts = Math.min(steps.length, 12);
+                for (let i = 0; i < maxPts; i++) {
+                    const sx = Math.max(xmin, Math.min(xmax, steps[i].x));
+                    const sy = Math.max(ymin, Math.min(ymax, steps[i].y));
+                    const [cx, cy] = toC(sx, sy);
+                    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI*2);
+                    ctx.fillStyle = cfg.color; ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+                }
+
+                // Step count
+                ctx.fillStyle = '#555'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+                const lastStep = steps[steps.length-1];
+                const converged = Math.abs(lastStep.x - 3) < 0.1;
+                if (cfg.lr < 0.05) {
+                    ctx.fillText('20 bước: x = ' + lastStep.x.toFixed(1), ox+pw/2, oy+ph-8);
+                    ctx.fillText('Chưa đến đáy!', ox+pw/2, oy+ph+8);
+                } else if (converged) {
+                    ctx.fillText('Hội tụ! x ≈ 3.0', ox+pw/2, oy+ph-8);
+                } else {
+                    ctx.fillText('Dao động, không hội tụ!', ox+pw/2, oy+ph-8);
+                }
+            });
+
+            // Bottom note
+            ctx.fillStyle = '#667eea'; ctx.font = 'italic 13px Georgia'; ctx.textAlign = 'center';
+            ctx.fillText('f(x) = (x−3)² + 1,  xuất phát x = 0,  20 bước', W/2, H-8);
+        }
+
+        // ==============================
+        // Visualization: GD 2D contour (slide 7)
+        // ==============================
+        function drawGD2D() {
+            const c = document.getElementById('vizGD2D');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 350 * dpr;
+            c.style.width = '800px'; c.style.height = '350px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 350;
+            const cx0 = W/2, cy0 = H/2;
+            const scale = 35;
+
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            function toC(x, y) {
+                return [cx0 + x*scale, cy0 - y*scale];
+            }
+
+            // Draw contour rings: f(x,y) = x² + y²
+            const levels = [1, 4, 9, 16, 25];
+            const colors = ['#2ecc7140', '#3498db30', '#667eea25', '#764ba220', '#9b59b618'];
+            levels.forEach((lv, i) => {
+                const r = Math.sqrt(lv) * scale;
+                ctx.beginPath(); ctx.arc(cx0, cy0, r, 0, Math.PI*2);
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                ctx.strokeStyle = '#667eea'; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+                ctx.stroke(); ctx.globalAlpha = 1;
+
+                // Label
+                ctx.fillStyle = '#999'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'left';
+                ctx.fillText('f=' + lv, cx0 + r + 3, cy0 - 3);
+            });
+
+            // Axes
+            ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(cx0 - 200, cy0); ctx.lineTo(cx0 + 200, cy0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx0, cy0 - 180); ctx.lineTo(cx0, cy0 + 180); ctx.stroke();
+            ctx.fillStyle = '#999'; ctx.font = '13px Segoe UI';
+            ctx.textAlign = 'center'; ctx.fillText('x', cx0 + 210, cy0 + 15);
+            ctx.fillText('y', cx0 + 10, cy0 - 185);
+
+            // GD path from (3, 4)
+            let x = 3.0, y = 4.0;
+            const lr = 0.1;
+            const steps = [{x, y}];
+            for (let i = 0; i < 25; i++) {
+                x = x - lr * 2 * x;
+                y = y - lr * 2 * y;
+                steps.push({x, y});
+            }
+
+            // Draw path
+            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+            ctx.beginPath();
+            steps.forEach((s, i) => {
+                const [px, py] = toC(s.x, s.y);
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            });
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Points
+            for (let i = 0; i < Math.min(steps.length, 15); i++) {
+                const [px, py] = toC(steps[i].x, steps[i].y);
+                const r = i === 0 ? 7 : (i >= 12 ? 5 : 4);
+                ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2);
+                ctx.fillStyle = i === 0 ? '#e74c3c' : '#f39c12';
+                ctx.fill();
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+            }
+
+            // Start label
+            const [sx, sy] = toC(3, 4);
+            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'left';
+            ctx.fillText('Xuất phát (3, 4)', sx + 12, sy - 8);
+
+            // End label
+            ctx.beginPath(); ctx.arc(cx0, cy0, 6, 0, Math.PI*2);
+            ctx.fillStyle = '#2ecc71'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'left';
+            ctx.fillText('Đích (0, 0)', cx0 + 12, cy0 + 20);
+
+            // Title
+            ctx.fillStyle = '#667eea'; ctx.font = 'italic 14px Georgia'; ctx.textAlign = 'right';
+            ctx.fillText('f(x,y) = x² + y²,  lr = 0.1', W - 30, 25);
+
+            // Arrow showing spiral
+            ctx.fillStyle = '#555'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'left';
+            const [mx, my2] = toC(1.5, 2.5);
+            ctx.fillText('GD đi thẳng', mx + 10, my2);
+            ctx.fillText('về tâm (0,0)', mx + 10, my2 + 16);
+        }
+
+        // ==============================
+        // Visualization: PSO Idea (slide 14)
+        // ==============================
+        function drawPSOIdea() {
+            const c = document.getElementById('vizPSOIdea');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 300 * dpr;
+            c.style.width = '800px'; c.style.height = '300px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 300;
+            ctx.fillStyle = '#f0f8ff';
+            ctx.fillRect(0, 0, W, H);
+
+            // Contour-like background for search space
+            const cx0 = W/2, cy0 = H/2;
+            const levels = [120, 90, 60, 35, 15];
+            const alphas = [0.06, 0.08, 0.10, 0.14, 0.20];
+            levels.forEach((r, i) => {
+                ctx.beginPath(); ctx.arc(cx0 - 80, cy0 + 20, r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(46, 204, 113, ${alphas[i]})`;
+                ctx.fill();
+            });
+
+            // Target (gBest)
+            ctx.beginPath(); ctx.arc(cx0 - 80, cy0 + 20, 10, 0, Math.PI*2);
+            ctx.fillStyle = '#2ecc71'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 12px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('gBest', cx0 - 80, cy0 + 45);
+            ctx.fillText('(tốt nhất đàn)', cx0 - 80, cy0 + 60);
+
+            // Particles with velocity arrows
+            const particles = [
+                {x: 100, y: 60, vx: 30, vy: 25, pbx: 180, pby: 100},
+                {x: 600, y: 50, vx: -40, vy: 30, pbx: 500, pby: 120},
+                {x: 650, y: 250, vx: -35, vy: -20, pbx: 550, pby: 200},
+                {x: 150, y: 240, vx: 20, vy: -30, pbx: 200, pby: 180},
+                {x: 500, y: 150, vx: -30, vy: 10, pbx: 420, pby: 160},
+                {x: 300, y: 40, vx: -5, vy: 30, pbx: 310, pby: 100},
+                {x: 700, y: 140, vx: -45, vy: 15, pbx: 600, pby: 150},
+                {x: 80, y: 150, vx: 25, vy: 10, pbx: 150, pby: 140},
+            ];
+
+            particles.forEach(p => {
+                // pBest marker (small)
+                ctx.beginPath(); ctx.arc(p.pbx, p.pby, 4, 0, Math.PI*2);
+                ctx.fillStyle = '#e74c3c60'; ctx.fill();
+
+                // Dashed line to pBest
+                ctx.strokeStyle = '#e74c3c40'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.pbx, p.pby); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Velocity arrow
+                ctx.strokeStyle = '#667eea'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.vx, p.y + p.vy); ctx.stroke();
+                // Arrowhead
+                const angle = Math.atan2(p.vy, p.vx);
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.vx, p.y + p.vy);
+                ctx.lineTo(p.x + p.vx - 8*Math.cos(angle-0.4), p.y + p.vy - 8*Math.sin(angle-0.4));
+                ctx.lineTo(p.x + p.vx - 8*Math.cos(angle+0.4), p.y + p.vy - 8*Math.sin(angle+0.4));
+                ctx.fillStyle = '#667eea'; ctx.fill();
+
+                // Particle dot
+                ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+                ctx.fillStyle = '#3498db'; ctx.fill();
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+            });
+
+            // Legend
+            ctx.font = '12px Segoe UI'; ctx.textAlign = 'left';
+            const lx = 15, ly = H - 55;
+            // Particle
+            ctx.beginPath(); ctx.arc(lx + 6, ly, 5, 0, Math.PI*2); ctx.fillStyle = '#3498db'; ctx.fill();
+            ctx.fillStyle = '#555'; ctx.fillText('Particle (vị trí hiện tại)', lx + 18, ly + 4);
+            // Arrow
+            ctx.strokeStyle = '#667eea'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(lx, ly + 18); ctx.lineTo(lx + 15, ly + 18); ctx.stroke();
+            ctx.fillStyle = '#555'; ctx.fillText('Vận tốc (hướng bay)', lx + 18, ly + 22);
+            // pBest
+            ctx.beginPath(); ctx.arc(lx + 6, ly + 36, 4, 0, Math.PI*2); ctx.fillStyle = '#e74c3c60'; ctx.fill();
+            ctx.fillStyle = '#555'; ctx.fillText('pBest (tốt nhất cá nhân)', lx + 18, ly + 40);
+        }
+
+        // ==============================
+        // Visualization: PSO Formula (slide 15)
+        // ==============================
+        function drawPSOFormula() {
+            const c = document.getElementById('vizPSOFormula');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 200 * dpr;
+            c.style.width = '800px'; c.style.height = '200px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 200;
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            // Draw a single particle showing 3 forces
+            const px = 300, py = 120;
+
+            // Current position
+            ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI*2);
+            ctx.fillStyle = '#3498db'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#3498db'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('x (hiện tại)', px, py + 28);
+
+            // Arrow 1: Inertia (continue old direction)
+            ctx.strokeStyle = '#667eea'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 120, py - 30); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(px + 120, py - 30);
+            ctx.lineTo(px + 110, py - 22);
+            ctx.lineTo(px + 112, py - 36);
+            ctx.fillStyle = '#667eea'; ctx.fill();
+            ctx.font = 'bold 12px Segoe UI'; ctx.textAlign = 'left';
+            ctx.fillText('w × v (quán tính)', px + 125, py - 25);
+
+            // pBest point
+            const pbx = px + 180, pby = py - 70;
+            ctx.beginPath(); ctx.arc(pbx, pby, 7, 0, Math.PI*2);
+            ctx.fillStyle = '#e74c3c'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 12px Segoe UI';
+            ctx.fillText('pBest', pbx + 12, pby + 4);
+
+            // Arrow 2: To pBest
+            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(pbx - 10, pby + 5); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#e74c3c'; ctx.font = '11px Segoe UI';
+            ctx.fillText('c₁ × (pBest − x)', px + 60, py - 55);
+
+            // gBest point
+            const gbx = px + 100, gby = py + 60;
+            ctx.beginPath(); ctx.arc(gbx, gby, 7, 0, Math.PI*2);
+            ctx.fillStyle = '#2ecc71'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 12px Segoe UI';
+            ctx.fillText('gBest', gbx + 12, gby + 4);
+
+            // Arrow 3: To gBest
+            ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(gbx - 8, gby - 3); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#2ecc71'; ctx.font = '11px Segoe UI';
+            ctx.fillText('c₂ × (gBest − x)', px - 30, py + 55);
+
+            // Result arrow (combined)
+            const rx = px + 160, ry = py - 10;
+            ctx.strokeStyle = '#9b59b6'; ctx.lineWidth = 3; ctx.setLineDash([]);
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(rx, ry); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(rx, ry);
+            ctx.lineTo(rx - 10, ry + 4);
+            ctx.lineTo(rx - 6, ry - 8);
+            ctx.fillStyle = '#9b59b6'; ctx.fill();
+            ctx.font = 'bold 13px Segoe UI';
+            ctx.fillText('v mới (tổng hợp)', rx + 10, ry);
+
+            // New position
+            ctx.beginPath(); ctx.arc(rx + 5, ry, 6, 0, Math.PI*2);
+            ctx.fillStyle = '#9b59b680'; ctx.fill();
+            ctx.font = '11px Segoe UI';
+            ctx.fillText('x mới = x + v', rx + 15, ry + 18);
+        }
+
+        // ==============================
+        // Visualization: GA Idea (slide 10)
+        // ==============================
+        function drawGAIdea() {
+            const c = document.getElementById('vizGAIdea');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 300 * dpr;
+            c.style.width = '800px'; c.style.height = '300px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 300;
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            // 3 generations showing improvement
+            const gens = [
+                { label: 'Thế hệ 1 (ngẫu nhiên)', points: [1.2, -3.5, 4.1, -1.8, 2.9, -4.2, 0.5, 3.3], color: '#e74c3c' },
+                { label: 'Thế hệ 50', points: [-2.1, -1.9, -2.5, -1.5, -2.8, -1.7, -2.3, -2.0], color: '#f39c12' },
+                { label: 'Thế hệ 100 (hội tụ)', points: [-2.02, -2.01, -1.99, -2.03, -2.0, -1.98, -2.01, -2.02], color: '#2ecc71' }
+            ];
+
+            function f(x) { return 0.08*x*x*x*x - 0.9*x*x + 0.15*x + 5; }
+
+            const pw = 240, ph = 250, gap = 15;
+            const startLeft = (W - 3*pw - 2*gap) / 2;
+
+            gens.forEach((gen, idx) => {
+                const ox = startLeft + idx*(pw+gap), oy = 10;
+                const pmx = 25, pmy = 30, pgw = pw-2*pmx, pgh = ph-2*pmy;
+
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.roundRect(ox, oy, pw, ph, 8); ctx.fill(); ctx.stroke();
+
+                // Title
+                ctx.fillStyle = gen.color; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(gen.label, ox+pw/2, oy+18);
+
+                const xmin = -5, xmax = 5, ymin = 0, ymax = 10;
+                function toC(x, y) {
+                    return [ox+pmx+(x-xmin)/(xmax-xmin)*pgw, oy+pmy+pgh-(y-ymin)/(ymax-ymin)*pgh];
+                }
+
+                // Curve
+                ctx.beginPath(); ctx.strokeStyle = '#bbc'; ctx.lineWidth = 2;
+                for (let px = 0; px <= pgw; px++) {
+                    const x = xmin + px/pgw*(xmax-xmin);
+                    const [cx, cy] = toC(x, f(x));
+                    px === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+                }
+                ctx.stroke();
+
+                // Points (individuals)
+                gen.points.forEach(x => {
+                    const [cx, cy] = toC(x, f(x));
+                    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2);
+                    ctx.fillStyle = gen.color; ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+                });
+
+                // Arrow between panels
+                if (idx < 2) {
+                    const ax = ox + pw + gap/2;
+                    ctx.fillStyle = '#667eea'; ctx.font = '24px Segoe UI'; ctx.textAlign = 'center';
+                    ctx.fillText('→', ax, oy + ph/2);
+                }
+            });
+
+            // Bottom text
+            ctx.fillStyle = '#555'; ctx.font = '13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('Quần thể tập trung dần vào vùng có f(x) thấp nhất (Global Minimum)', W/2, H-10);
+        }
+
+        // ==============================
+        // Visualization: GA 4 Steps (slide 11)
+        // ==============================
+        function drawGA4Steps() {
+            const c = document.getElementById('vizGA4Steps');
+            if (!c) return;
+            const dpr = window.devicePixelRatio || 1;
+            c.width = 800 * dpr; c.height = 380 * dpr;
+            c.style.width = '800px'; c.style.height = '380px';
+            const ctx = c.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = 800, H = 380;
+            ctx.fillStyle = '#fafbff';
+            ctx.fillRect(0, 0, W, H);
+
+            const steps = [
+                {
+                    num: '1', title: 'Khởi tạo', subtitle: 'Quần thể ngẫu nhiên',
+                    color: '#667eea',
+                    desc: ['50 cá thể ngẫu nhiên', 'Mỗi cá thể = 1 lời giải', 'VD: [2.1], [-3.5], [0.8]...'],
+                    example: 'pop = random(-5, 5, size=50)'
+                },
+                {
+                    num: '2', title: 'Chọn lọc', subtitle: 'Selection',
+                    color: '#e74c3c',
+                    desc: ['Tính f(x) cho mỗi cá thể', 'Xếp hạng: f nhỏ = tốt', 'Giữ 20 cá thể tốt nhất'],
+                    example: 'best = sort(pop, by=f)[:20]'
+                },
+                {
+                    num: '3', title: 'Lai ghép', subtitle: 'Crossover',
+                    color: '#f39c12',
+                    desc: ['Chọn 2 cha mẹ tốt', 'Kết hợp gene → con mới', 'VD: (2.1+-3.5)/2 = -0.7'],
+                    example: 'child = (parent1 + parent2) / 2'
+                },
+                {
+                    num: '4', title: 'Đột biến', subtitle: 'Mutation',
+                    color: '#2ecc71',
+                    desc: ['Thêm nhiễu nhỏ ngẫu nhiên', 'Khám phá vùng mới', 'VD: -0.7 + 0.2 = -0.5'],
+                    example: 'child += random_noise(0.3)'
+                }
+            ];
+
+            const bw = 175, bh = 300, gap = 12;
+            const startLeft = (W - 4*bw - 3*gap) / 2;
+
+            steps.forEach((step, idx) => {
+                const ox = startLeft + idx*(bw+gap), oy = 15;
+
+                // Card
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = step.color + '40'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.roundRect(ox, oy, bw, bh, 10); ctx.fill(); ctx.stroke();
+
+                // Top colored bar
+                ctx.fillStyle = step.color;
+                ctx.beginPath(); ctx.roundRect(ox, oy, bw, 50, [10,10,0,0]); ctx.fill();
+
+                // Number circle
+                ctx.beginPath(); ctx.arc(ox + bw/2, oy + 25, 18, 0, Math.PI*2);
+                ctx.fillStyle = 'white'; ctx.fill();
+                ctx.fillStyle = step.color; ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(step.num, ox + bw/2, oy + 31);
+
+                // Title
+                ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 15px Segoe UI';
+                ctx.fillText(step.title, ox + bw/2, oy + 75);
+                ctx.fillStyle = '#999'; ctx.font = '12px Segoe UI';
+                ctx.fillText(step.subtitle, ox + bw/2, oy + 92);
+
+                // Description lines
+                ctx.fillStyle = '#555'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'left';
+                step.desc.forEach((line, i) => {
+                    ctx.fillText('• ' + line, ox + 12, oy + 120 + i*22);
+                });
+
+                // Code example
+                ctx.fillStyle = '#1e1e1e';
+                ctx.beginPath(); ctx.roundRect(ox + 8, oy + 195, bw - 16, 35, 6); ctx.fill();
+                ctx.fillStyle = '#d4d4d4'; ctx.font = '10px Courier New'; ctx.textAlign = 'left';
+                ctx.fillText(step.example, ox + 14, oy + 216);
+
+                // Arrow to next
+                if (idx < 3) {
+                    const ax = ox + bw + gap/2;
+                    ctx.fillStyle = '#667eea'; ctx.font = '22px Segoe UI'; ctx.textAlign = 'center';
+                    ctx.fillText('→', ax, oy + bh/2);
+                }
+            });
+
+            // Loop arrow at bottom
+            ctx.strokeStyle = '#667eea'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+            const loopY = 330;
+            ctx.beginPath();
+            ctx.moveTo(startLeft + 4*(bw+gap) - gap - 10, loopY);
+            ctx.lineTo(startLeft + 4*(bw+gap) - gap + 10, loopY);
+            ctx.quadraticCurveTo(startLeft + 4*(bw+gap) + 20, loopY, startLeft + 4*(bw+gap) + 20, loopY + 15);
+            ctx.quadraticCurveTo(startLeft + 4*(bw+gap) + 20, loopY + 30, startLeft + 2*(bw+gap), loopY + 30);
+            ctx.lineTo(startLeft + 10, loopY + 30);
+            ctx.quadraticCurveTo(startLeft - 10, loopY + 30, startLeft - 10, loopY + 15);
+            ctx.quadraticCurveTo(startLeft - 10, loopY, startLeft + 10, loopY);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Loop label
+            ctx.fillStyle = '#667eea'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('Lặp lại 100 - 1000 thế hệ', W/2, loopY + 35);
+
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(startLeft + 10, loopY - 5);
+            ctx.lineTo(startLeft + 20, loopY);
+            ctx.lineTo(startLeft + 10, loopY + 5);
+            ctx.fillStyle = '#667eea'; ctx.fill();
+        }
+
+        updateSlide();
+    </script>
+</body>
+</html>
